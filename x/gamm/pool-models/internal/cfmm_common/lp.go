@@ -129,7 +129,7 @@ var singleAssetJoinCorrectnessThreshold = sdk.NewInt(1)
 func BinarySearchSingleAssetJoin(
 	pool types.TraditionalAmmInterface,
 	tokenIn sdk.Coin,
-	poolWithAddedLiquidityAndShares func(newLiquidity sdk.Coin, newShares sdk.Int) types.TraditionalAmmInterface,
+	poolWithAddedLiquidityAndShares func(newLiquidity sdk.Coin, newShares sdk.Int) types.BalancerPool,
 ) (numLPShares sdk.Int, err error) {
 	// use dummy context
 	ctx := sdk.Context{}
@@ -167,7 +167,7 @@ func BinarySearchSingleAssetJoin(
 }
 
 // SwapAllCoinsToSingleAsset iterates through each token in the input set and trades it against the same pool sequentially
-func SwapAllCoinsToSingleAsset(pool types.PoolI, ctx sdk.Context, inTokens sdk.Coins, swapToDenom string) (sdk.Int, error) {
+func SwapAllCoinsToSingleAsset(pool types.TraditionalAmmInterface, ctx sdk.Context, inTokens sdk.Coins, swapToDenom string) (sdk.Int, error) {
 	swapFee := sdk.ZeroDec()
 	tokenOutAmt := inTokens.AmountOfNoDenomValidation(swapToDenom)
 	for _, coin := range inTokens {

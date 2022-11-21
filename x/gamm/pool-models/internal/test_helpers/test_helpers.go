@@ -33,7 +33,7 @@ func (suite *CfmmCommonTestSuite) CreateTestContext() sdk.Context {
 func TestCalculateAmountOutAndIn_InverseRelationship(
 	t *testing.T,
 	ctx sdk.Context,
-	pool types.PoolI,
+	pool types.TraditionalAmmInterface,
 	assetInDenom string,
 	assetOutDenom string,
 	initialCalcOut int64,

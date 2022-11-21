@@ -72,24 +72,37 @@ func (k Keeper) createPosition(ctx sdk.Context, poolId uint64, owner sdk.AccAddr
 		return sdk.Int{}, sdk.Int{}, sdk.Dec{}, err
 	}
 
+	// TODO: shouldn't we do this before updating ticks?
+	denom0 := pool.GetToken0()
+	denom1 := pool.GetToken1()
+
 	currentTick := pool.GetCurrentTick()
 	if currentTick.LT(sdk.NewInt(lowerTick)) {
 		// outcome one: position is below current price
 		// this means position is solely made up of asset0
 		amtDenom0 = types.CalcAmount0Delta(liquidity, sqrtRatioLowerTick, sqrtRatioUpperTick, false).RoundInt()
 		amtDenom1 = sdk.ZeroInt()
+		err = k.bankKeeper.SendCoins(ctx, owner, pool.GetAddress(), sdk.NewCoins(sdk.NewCoin(denom0, amtDenom0)))
 	} else if currentTick.LT(sdk.NewInt(upperTick)) {
 		// outcome two: the current price falls within the position
 		// if this is the case, we attempt to provide liquidity evenly between asset0 and asset1
 		// we also update the pool liquidity since the virtual liquidity is modified by this position's creation
 		amtDenom0 = types.CalcAmount0Delta(liquidity, currentSqrtPrice, sqrtRatioUpperTick, false).RoundInt()
 		amtDenom1 = types.CalcAmount1Delta(liquidity, currentSqrtPrice, sqrtRatioLowerTick, false).RoundInt()
+		fmt.Printf("%v owner \n", owner)
+		fmt.Printf("%v pool.GetAddress() \n", pool.GetAddress().String())
+		fmt.Printf("%v sdk.NewCoins(sdk.NewCoin(denom0, amtDenom0), sdk.NewCoin(denom1, amtDenom1)) \n", sdk.NewCoins(sdk.NewCoin(denom0, amtDenom0), sdk.NewCoin(denom1, amtDenom1)).String())
+		err = k.bankKeeper.SendCoins(ctx, owner, pool.GetAddress(), sdk.NewCoins(sdk.NewCoin(denom0, amtDenom0), sdk.NewCoin(denom1, amtDenom1)))
 		pool.UpdateLiquidity(liquidity)
 	} else {
 		// outcome three: position is above current price
 		// this means position is solely made up of asset1
 		amtDenom0 = sdk.ZeroInt()
 		amtDenom1 = types.CalcAmount1Delta(liquidity, sqrtRatioLowerTick, sqrtRatioUpperTick, false).RoundInt()
+		err = k.bankKeeper.SendCoins(ctx, owner, pool.GetAddress(), sdk.NewCoins(sdk.NewCoin(denom1, amtDenom1)))
+	}
+	if err != nil {
+		return sdk.Int{}, sdk.Int{}, sdk.Dec{}, err
 	}
 
 	err = k.setPool(ctx, pool)

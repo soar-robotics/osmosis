@@ -11,7 +11,7 @@ import (
 )
 
 // TODO: spec, tests, implementation
-func (k Keeper) InitializePool(ctx sdk.Context, pool gammtypes.PoolI, creatorAddress sdk.AccAddress) error {
+func (k Keeper) InitializePool(ctx sdk.Context, pool gammtypes.TraditionalAmmInterface, creatorAddress sdk.AccAddress) error {
 	panic("not implemented")
 }
 
@@ -40,6 +40,6 @@ func (k Keeper) CreateNewConcentratedLiquidityPool(ctx sdk.Context, poolId uint6
 }
 
 // GetPool returns a pool with a given id.
-func (k Keeper) GetPool(ctx sdk.Context, poolId uint64) (gammtypes.PoolI, error) {
+func (k Keeper) GetPool(ctx sdk.Context, poolId uint64) (gammtypes.BalancerPool, error) {
 	return nil, errors.New("not implemented")
 }

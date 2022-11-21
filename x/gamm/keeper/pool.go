@@ -14,11 +14,11 @@ import (
 )
 
 // TODO spec and tests
-func (k Keeper) InitializePool(ctx sdk.Context, pool types.PoolI, creatorAddress sdk.AccAddress) error {
-	traditionalPool, ok := pool.(types.TraditionalAmmInterface)
-	if !ok {
-		return fmt.Errorf("failed to create gamm pool. Could not cast to TraditionalAmmInterface")
-	}
+func (k Keeper) InitializePool(ctx sdk.Context, pool types.TraditionalAmmInterface, creatorAddress sdk.AccAddress) error {
+	// traditionalPool, ok := pool.(types.TraditionalAmmInterface)
+	// if !ok {
+	// 	return fmt.Errorf("failed to create gamm pool. Could not cast to TraditionalAmmInterface")
+	// }
 
 	poolId := pool.GetId()
 
@@ -51,7 +51,7 @@ func (k Keeper) InitializePool(ctx sdk.Context, pool types.PoolI, creatorAddress
 		return err
 	}
 
-	k.RecordTotalLiquidityIncrease(ctx, traditionalPool.GetTotalPoolLiquidity(ctx))
+	k.RecordTotalLiquidityIncrease(ctx, pool.GetTotalPoolLiquidity(ctx))
 
 	k.incrementPoolCount(ctx)
 
@@ -62,20 +62,20 @@ func (k Keeper) MarshalPool(pool types.PoolI) ([]byte, error) {
 	return k.cdc.MarshalInterface(pool)
 }
 
-func (k Keeper) UnmarshalPool(bz []byte) (types.TraditionalAmmInterface, error) {
-	var acc types.TraditionalAmmInterface
+func (k Keeper) UnmarshalPool(bz []byte) (types.BalancerPool, error) {
+	var acc types.BalancerPool
 	return acc, k.cdc.UnmarshalInterface(bz, &acc)
 }
 
 // GetPool returns a pool with a given id.
-func (k Keeper) GetPool(ctx sdk.Context, poolId uint64) (types.PoolI, error) {
+func (k Keeper) GetPool(ctx sdk.Context, poolId uint64) (types.BalancerPool, error) {
 	return k.getPoolForSwap(ctx, poolId)
 }
 
 // GetPoolAndPoke returns a PoolI based on it's identifier if one exists. If poolId corresponds
 // to a pool with weights (e.g. balancer), the weights of the pool are updated via PokePool prior to returning.
 // TODO: Consider rename to GetPool due to downstream API confusion.
-func (k Keeper) GetPoolAndPoke(ctx sdk.Context, poolId uint64) (types.TraditionalAmmInterface, error) {
+func (k Keeper) GetPoolAndPoke(ctx sdk.Context, poolId uint64) (types.BalancerPool, error) {
 	store := ctx.KVStore(k.storeKey)
 	poolKey := types.GetKeyPrefixPools(poolId)
 	if !store.Has(poolKey) {
@@ -97,7 +97,7 @@ func (k Keeper) GetPoolAndPoke(ctx sdk.Context, poolId uint64) (types.Traditiona
 }
 
 // Get pool and check if the pool is active, i.e. allowed to be swapped against.
-func (k Keeper) getPoolForSwap(ctx sdk.Context, poolId uint64) (types.TraditionalAmmInterface, error) {
+func (k Keeper) getPoolForSwap(ctx sdk.Context, poolId uint64) (types.BalancerPool, error) {
 	pool, err := k.GetPoolAndPoke(ctx, poolId)
 	if err != nil {
 		return &balancer.Pool{}, err

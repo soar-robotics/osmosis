@@ -189,15 +189,15 @@ func (suite *KeeperTestSuite) TestGetSwapModule() {
 
 			expectError: types.FailedToFindRouteError{PoolId: 2},
 		},
-		"undefined route": {
-			preCreatePoolType: types.Balancer,
-			poolId:            1,
-			routesOverwrite: map[types.PoolType]types.SwapI{
-				types.StableSwap: &gamm.Keeper{}, // undefined for balancer.
-			},
+		// "undefined route": {
+		// 	preCreatePoolType: types.Balancer,
+		// 	poolId:            1,
+		// 	routesOverwrite: map[types.PoolType]types.SwapI{
+		// 		types.StableSwap: &gamm.Keeper{}, // undefined for balancer.
+		// 	},
 
-			expectError: types.UndefinedRouteError{PoolId: 1, PoolType: types.Balancer},
-		},
+		// 	expectError: types.UndefinedRouteError{PoolId: 1, PoolType: types.Balancer},
+		// },
 		// TODO: valid stableswap test case.
 		// TODO: valid concentrated liquidity test case.
 	}

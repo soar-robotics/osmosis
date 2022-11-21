@@ -361,7 +361,7 @@ func (p *Pool) calcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string, swapFee
 }
 
 func (p *Pool) calcSingleAssetJoinShares(tokenIn sdk.Coin, swapFee sdk.Dec) (sdk.Int, error) {
-	poolWithAddedLiquidityAndShares := func(newLiquidity sdk.Coin, newShares sdk.Int) types.TraditionalAmmInterface {
+	poolWithAddedLiquidityAndShares := func(newLiquidity sdk.Coin, newShares sdk.Int) types.BalancerPool {
 		paCopy := p.Copy()
 		paCopy.updatePoolForJoin(sdk.NewCoins(tokenIn), newShares)
 		return &paCopy

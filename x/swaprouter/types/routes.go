@@ -32,9 +32,9 @@ type CommunityPoolI interface {
 
 // TODO: godoc
 type SwapI interface {
-	InitializePool(ctx sdk.Context, pool gammtypes.PoolI, creatorAddress sdk.AccAddress) error
+	InitializePool(ctx sdk.Context, pool gammtypes.TraditionalAmmInterface, creatorAddress sdk.AccAddress) error
 
-	GetPool(ctx sdk.Context, poolId uint64) (gammtypes.PoolI, error)
+	GetPool(ctx sdk.Context, poolId uint64) (gammtypes.BalancerPool, error)
 
 	SwapExactAmountIn(
 		ctx sdk.Context,

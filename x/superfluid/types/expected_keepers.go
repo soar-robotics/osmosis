@@ -44,7 +44,7 @@ type LockupMsgServer interface {
 
 // GammKeeper defines the expected interface needed for superfluid module.
 type GammKeeper interface {
-	GetPoolAndPoke(ctx sdk.Context, poolId uint64) (gammtypes.TraditionalAmmInterface, error)
+	GetPoolAndPoke(ctx sdk.Context, poolId uint64) (gammtypes.BalancerPool, error)
 	GetPoolsAndPoke(ctx sdk.Context) (res []gammtypes.TraditionalAmmInterface, err error)
 	ExitPool(ctx sdk.Context, sender sdk.AccAddress, poolId uint64, shareInAmount sdk.Int, tokenOutMins sdk.Coins) (exitCoins sdk.Coins, err error)
 }
