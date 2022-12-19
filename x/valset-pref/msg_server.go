@@ -101,3 +101,14 @@ func (server msgServer) WithdrawDelegationRewards(goCtx context.Context, msg *ty
 
 	return &types.MsgWithdrawDelegationRewardsResponse{}, nil
 }
+
+func (server msgServer) DelegateBondedTokens(goCtx context.Context, msg *types.MsgDelegateBondedTokens) (*types.MsgDelegateBondedTokensResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	err := server.keeper.DelegateBondedTokens(ctx, msg.ID, msg.Delegator)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgDelegateBondedTokensResponse{}, nil
+}
