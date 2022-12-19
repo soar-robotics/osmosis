@@ -33,4 +33,7 @@ type DistributionKeeper interface {
 }
 type LockupKeeper interface {
 	GetLockByID(ctx sdk.Context, lockID uint64) (*lockuptypes.PeriodLock, error)
+	HasAnySyntheticLockups(ctx sdk.Context, lockID uint64) bool
+	GetAllSyntheticLockupsByLockup(ctx sdk.Context, lockID uint64) []lockuptypes.SyntheticLock
+	ForceUnlock(ctx sdk.Context, lock lockuptypes.PeriodLock) error
 }
