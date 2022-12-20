@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	gammtypes "github.com/osmosis-labs/osmosis/v13/x/gamm/types"
@@ -423,6 +424,7 @@ func (suite *KeeperTestSuite) TestMsgForceUnlock() {
 		suite.FundAcc(addr1, coinsToLock)
 
 		unbondingDuration := suite.App.StakingKeeper.GetParams(suite.Ctx).UnbondingTime
+		fmt.Println(unbondingDuration)
 		resp, err := msgServer.LockTokens(c, types.NewMsgLockTokens(addr1, unbondingDuration, coinsToLock))
 		suite.Require().NoError(err)
 
