@@ -105,7 +105,19 @@ func (server msgServer) WithdrawDelegationRewards(goCtx context.Context, msg *ty
 func (server msgServer) DelegateBondedTokens(goCtx context.Context, msg *types.MsgDelegateBondedTokens) (*types.MsgDelegateBondedTokensResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := server.keeper.DelegateBondedTokens(ctx, msg.ID, msg.Delegator)
+	// Message 1: force unlock bonded osmo tokens.
+	unlockedOsmoToken, err := server.keeper.ForceUnlockBondedOsmo(ctx, msg.ID, msg.Delegator)
+	if err != nil {
+		return nil, err
+	}
+
+	delegator, err := sdk.AccAddressFromBech32(msg.Delegator)
+	if err != nil {
+		return nil, err
+	}
+
+	// Message 2: Perform osmo token delegation.
+	_, err = server.DelegateToValidatorSet(goCtx, types.NewMsgDelegateToValidatorSet(delegator, unlockedOsmoToken))
 	if err != nil {
 		return nil, err
 	}

@@ -216,7 +216,7 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 func (k Keeper) WithdrawDelegationRewards(ctx sdk.Context, delegatorAddr string) error {
 	delegator, err := sdk.AccAddressFromBech32(delegatorAddr)
 	if err != nil {
-		return err
+		return sdk.Coin{}, err
 	}
 
 	// check if there is existing staking position that's not val-set
@@ -232,7 +232,7 @@ func (k Keeper) WithdrawDelegationRewards(ctx sdk.Context, delegatorAddr string)
 	if !found && len(delegations) != 0 {
 		err := k.withdrawExistingStakingPosition(ctx, delegator, delegations)
 		if err != nil {
-			return err
+			return sdk.Coin{}, err
 		}
 		return nil
 	}
