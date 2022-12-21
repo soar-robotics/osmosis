@@ -252,6 +252,7 @@ func (k Keeper) WithdrawDelegationRewards(ctx sdk.Context, delegatorAddr string)
 		return err
 	}
 
+<<<<<<< HEAD
 	err = k.withdrawExistingValSetStakingPosition(ctx, delegator, existingSet.Preferences)
 	if err != nil {
 		return err
@@ -285,6 +286,13 @@ func (k Keeper) withdrawExistingValSetStakingPosition(ctx sdk.Context, delegator
 		}
 	}
 	return nil
+=======
+	// Takes unlocked osmo, and delegate according to valset pref
+	unlockedOsmoCoin := sdk.Coin{Denom: appParams.BaseCoinUnit, Amount: unlockedOsmoAmount}
+
+	return unlockedOsmoCoin, nil
+
+>>>>>>> 8664ac6bb (added osmo denom check for lockid)
 }
 
 // GetValAddrAndVal checks if the validator address is valid and the validator provided exists on chain.
