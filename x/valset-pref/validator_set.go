@@ -13,7 +13,6 @@ import (
 
 type valSet struct {
 	valAddr string
-	weight  sdk.Dec
 	amount  sdk.Dec
 }
 
@@ -129,13 +128,15 @@ func (k Keeper) UndelegateFromValidatorSet(ctx sdk.Context, delegatorAddr string
 // 1. the (re)delegator already has another immature redelegation in progress with a destination to a validator (let's call it Validator X)
 // 2. the (re)delegator is attempting to create a new redelegation where the source validator for this new redelegation is Validator X
 // 3. the (re)delegator cannot create a new redelegation until the unbonding period i.e. 21 days.
-func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, existingSet types.ValidatorSetPreferences, newSet []types.ValidatorPreference) error {
+func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, existingSet []types.ValidatorPreference, newSet []types.ValidatorPreference) error {
 	var existingValSet []valSet
 	var newValSet []valSet
 	totalTokenAmount := sdk.NewDec(0)
 
+	existingSet = k.appendExistingDelegationPositions(ctx, delegator, existingSet)
+	fmt.Println(existingSet)
 	// Rearranging the exisingValSet and newValSet to to add extra validator padding
-	for _, existingVals := range existingSet.Preferences {
+	for _, existingVals := range existingSet {
 		valAddr, validator, err := k.GetValidatorInfo(ctx, existingVals.ValOperAddress)
 		if err != nil {
 			return err
@@ -169,7 +170,6 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 
 		diff_val := valSet{
 			valAddr: newVals.valAddr,
-			weight:  newVals.amount,
 			amount:  diffAmount,
 		}
 		diffValSet = append(diffValSet, &diff_val)
@@ -370,13 +370,11 @@ func (k Keeper) GetValidatorInfo(ctx sdk.Context, existingValAddr string) (sdk.V
 func (k Keeper) GetValSetStruct(validator types.ValidatorPreference, amountFromShares sdk.Dec) (valSet, valSet) {
 	val_struct := valSet{
 		valAddr: validator.ValOperAddress,
-		weight:  validator.Weight,
 		amount:  amountFromShares,
 	}
 
 	val_struct_zero_amount := valSet{
 		valAddr: validator.ValOperAddress,
-		weight:  validator.Weight,
 		amount:  sdk.NewDec(0),
 	}
 

@@ -63,14 +63,14 @@ func (server msgServer) UndelegateFromValidatorSet(goCtx context.Context, msg *t
 func (server msgServer) RedelegateValidatorSet(goCtx context.Context, msg *types.MsgRedelegateValidatorSet) (*types.MsgRedelegateValidatorSetResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	existingSet, found := server.keeper.GetValidatorSetPreference(ctx, msg.Delegator)
-	if !found {
-		return nil, fmt.Errorf("user %s doesn't have validator set", msg.Delegator)
-	}
-
 	delegator, err := sdk.AccAddressFromBech32(msg.Delegator)
 	if err != nil {
 		return nil, err
+	}
+
+	existingSet, found := server.keeper.GetValidatorSetPreference(ctx, msg.Delegator)
+	if !found {
+		return nil, fmt.Errorf("user %s doesn't have validator set", msg.Delegator)
 	}
 
 	// Message 1: override the validator set preference set entry
@@ -83,7 +83,7 @@ func (server msgServer) RedelegateValidatorSet(goCtx context.Context, msg *types
 	}
 
 	// Message 2: Perform the actual redelegation
-	err = server.keeper.PreformRedelegation(ctx, delegator, existingSet, msg.Preferences)
+	err = server.keeper.PreformRedelegation(ctx, delegator, existingSet.Preferences, msg.Preferences)
 	if err != nil {
 		return nil, err
 	}
