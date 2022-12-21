@@ -584,7 +584,6 @@ func (suite *KeeperTestSuite) TestWithdrawDelegationRewards() {
 
 			} else {
 				suite.Require().Error(err)
-
 			}
 		})
 	}
