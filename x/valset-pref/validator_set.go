@@ -134,7 +134,7 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 	totalTokenAmount := sdk.NewDec(0)
 
 	existingSet = k.appendExistingDelegationPositions(ctx, delegator, existingSet)
-	fmt.Println(existingSet)
+
 	// Rearranging the exisingValSet and newValSet to to add extra validator padding
 	for _, existingVals := range existingSet {
 		valAddr, validator, err := k.GetValidatorInfo(ctx, existingVals.ValOperAddress)
