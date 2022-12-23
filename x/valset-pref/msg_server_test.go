@@ -588,3 +588,81 @@ func (suite *KeeperTestSuite) TestWithdrawDelegationRewards() {
 		})
 	}
 }
+
+func (suite *KeeperTestSuite) TestDelegateBondedTokens() {
+	suite.SetupTest()
+
+	testLock := suite.SetupLocks(sdk.AccAddress([]byte("addr1---------------")))
+
+	tests := []struct {
+		name       string
+		delegator  sdk.AccAddress
+		lockId     uint64
+		expectPass bool
+	}{
+		{
+			name:       "DelegateBondedTokens with existing osmo denom lockId, bonded and <= 2 weeks bond duration",
+			delegator:  sdk.AccAddress([]byte("addr1---------------")),
+			lockId:     testLock[0].ID,
+			expectPass: true,
+		},
+		{
+			name:       "DelegateBondedTokens with existing stake denom lockId, bonded and <= 2 weeks bond duration",
+			delegator:  sdk.AccAddress([]byte("addr1---------------")),
+			lockId:     testLock[1].ID,
+			expectPass: false,
+		},
+		{
+			name:       "DelegateBondedTokens with non existing lockId",
+			delegator:  sdk.AccAddress([]byte("addr1---------------")),
+			lockId:     10,
+			expectPass: false,
+		},
+		{
+			name:       "DelegateBondedTokens with lockOwner != delegatorOwner",
+			delegator:  sdk.AccAddress([]byte("addr1---------------")),
+			lockId:     testLock[2].ID,
+			expectPass: false,
+		},
+		{
+			name:       "DelegateBondedTokens with lock duration > 2 weeks",
+			delegator:  sdk.AccAddress([]byte("addr1---------------")),
+			lockId:     testLock[3].ID,
+			expectPass: false,
+		},
+		{
+			name:       "DelegateBondedTokens with non bonded lockId",
+			delegator:  sdk.AccAddress([]byte("addr1---------------")),
+			lockId:     testLock[4].ID,
+			expectPass: false,
+		},
+		{
+			name:       "DelegateBondedTokens with synthetic locks",
+			delegator:  sdk.AccAddress([]byte("addr1---------------")),
+			lockId:     testLock[5].ID,
+			expectPass: false,
+		},
+	}
+
+	for _, test := range tests {
+		suite.Run(test.name, func() {
+			// setup message server
+			msgServer := valPref.NewMsgServerImpl(suite.App.ValidatorSetPreferenceKeeper)
+			c := sdk.WrapSDKContext(suite.Ctx)
+
+			// creates a validator preference list to delegate to
+			preferences := suite.PrepareDelegateToValidatorSet()
+
+			// SetValidatorSetPreference sets a new list of val-set
+			_, err := msgServer.SetValidatorSetPreference(c, types.NewMsgSetValidatorSetPreference(test.delegator, preferences))
+			suite.Require().NoError(err)
+
+			_, err = msgServer.DelegateBondedTokens(c, types.NewMsgDelegateBondedTokens(test.delegator, test.lockId))
+			if test.expectPass {
+				suite.Require().NoError(err)
+			} else {
+				suite.Require().Error(err)
+			}
+		})
+	}
+}
