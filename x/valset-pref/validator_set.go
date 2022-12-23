@@ -154,6 +154,7 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 		newValSet = append(newValSet, existing_val_zero_amount)
 		totalTokenAmount = totalTokenAmount.Add(tokenFromShares)
 	}
+	fmt.Println(existingValSet)
 
 	for _, newVals := range newSet {
 		amountToDelegate := newVals.Weight.Mul(totalTokenAmount)
@@ -162,6 +163,7 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 		newValSet = append(newValSet, new_val)
 		existingValSet = append(existingValSet, new_val_zero_amount)
 	}
+	fmt.Println(newSet)
 
 	// calculate the difference between two sets
 	var diffValSet []*valSet
@@ -174,6 +176,7 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 		}
 		diffValSet = append(diffValSet, &diff_val)
 	}
+	fmt.Println(diffValSet)
 
 	// Algorithm starts here
 	for _, diff_val := range diffValSet {
@@ -207,6 +210,29 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 	}
 
 	return nil
+}
+
+// appendExistingDelegationPositions appends existing staking position to existing valset position.
+func (k Keeper) appendExistingDelegationPositions(ctx sdk.Context, delegator sdk.AccAddress, existingSet []types.ValidatorPreference) []types.ValidatorPreference {
+	delegations := k.stakingKeeper.GetDelegatorDelegations(ctx, delegator, math.MaxUint16)
+
+	if len(delegations) != 0 {
+		m := make(map[string]bool)
+		for _, valsetDels := range existingSet {
+			m[valsetDels.ValOperAddress] = true
+		}
+
+		for _, stakingDels := range delegations {
+			if !m[stakingDels.ValidatorAddress] {
+				existingSet = append(existingSet, types.ValidatorPreference{
+					ValOperAddress: stakingDels.ValidatorAddress,
+					Weight:         sdk.ZeroDec(),
+				})
+			}
+		}
+	}
+
+	return existingSet
 }
 
 // WithdrawDelegationRewards withdraws all the delegation rewards from the validator in the val-set.
