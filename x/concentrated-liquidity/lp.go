@@ -233,7 +233,8 @@ func (k Keeper) initializeInitialPosition(ctx sdk.Context, pool types.Concentrat
 	}
 
 	// Calculate the initial tick from the initial spot price
-	initialTick := math.PriceToTick(initialSpotPrice)
+	// TODO
+	initialTick := math.PriceToTick(initialSpotPrice, sdk.NewInt(-4))
 
 	// Set the pool's current sqrt price and current tick to the above calculated values
 	pool.SetCurrentSqrtPrice(initialSqrtPrice)

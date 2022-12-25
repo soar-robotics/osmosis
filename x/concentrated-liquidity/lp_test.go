@@ -10,40 +10,42 @@ import (
 )
 
 type lpTest struct {
-	poolId             uint64
-	owner              sdk.AccAddress
-	currentTick        sdk.Int
-	lowerTick          int64
-	upperTick          int64
-	currentSqrtP       sdk.Dec
-	amount0Desired     sdk.Int
-	amount0Minimum     sdk.Int
-	amount0Expected    sdk.Int
-	amount1Desired     sdk.Int
-	amount1Minimum     sdk.Int
-	amount1Expected    sdk.Int
-	liquidityAmount    sdk.Dec
-	tickSpacing        uint64
-	isNotFirstPosition bool
-	expectedError      error
+	poolId                    uint64
+	owner                     sdk.AccAddress
+	currentTick               sdk.Int
+	lowerTick                 int64
+	upperTick                 int64
+	currentSqrtP              sdk.Dec
+	amount0Desired            sdk.Int
+	amount0Minimum            sdk.Int
+	amount0Expected           sdk.Int
+	amount1Desired            sdk.Int
+	amount1Minimum            sdk.Int
+	amount1Expected           sdk.Int
+	liquidityAmount           sdk.Dec
+	tickSpacing               uint64
+	precisionFactorAtPriceOne sdk.Int
+	isNotFirstPosition        bool
+	expectedError             error
 }
 
 var (
 	baseCase = &lpTest{
-		isNotFirstPosition: false,
-		poolId:             1,
-		currentTick:        DefaultCurrTick,
-		lowerTick:          DefaultLowerTick,
-		upperTick:          DefaultUpperTick,
-		currentSqrtP:       DefaultCurrSqrtPrice,
-		amount0Desired:     DefaultAmt0,
-		amount0Minimum:     sdk.ZeroInt(),
-		amount0Expected:    DefaultAmt0Expected,
-		amount1Desired:     DefaultAmt1,
-		amount1Minimum:     sdk.ZeroInt(),
-		amount1Expected:    DefaultAmt1Expected,
-		liquidityAmount:    DefaultLiquidityAmt,
-		tickSpacing:        DefaultTickSpacing,
+		isNotFirstPosition:        false,
+		poolId:                    1,
+		currentTick:               DefaultCurrTick,
+		lowerTick:                 DefaultLowerTick,
+		upperTick:                 DefaultUpperTick,
+		currentSqrtP:              DefaultCurrSqrtPrice,
+		amount0Desired:            DefaultAmt0,
+		amount0Minimum:            sdk.ZeroInt(),
+		amount0Expected:           DefaultAmt0Expected,
+		amount1Desired:            DefaultAmt1,
+		amount1Minimum:            sdk.ZeroInt(),
+		amount1Expected:           DefaultAmt1Expected,
+		liquidityAmount:           DefaultLiquidityAmt,
+		tickSpacing:               DefaultTickSpacing,
+		precisionFactorAtPriceOne: DefaultPrecisionValue,
 	}
 )
 
@@ -125,7 +127,7 @@ func (s *KeeperTestSuite) TestCreatePosition() {
 			s.FundAcc(s.TestAccs[0], PoolCreationFee)
 
 			// Create a CL pool with custom tickSpacing
-			poolID, err := s.App.SwapRouterKeeper.CreatePool(s.Ctx, clmodel.NewMsgCreateConcentratedPool(s.TestAccs[0], ETH, USDC, tc.tickSpacing))
+			poolID, err := s.App.SwapRouterKeeper.CreatePool(s.Ctx, clmodel.NewMsgCreateConcentratedPool(s.TestAccs[0], ETH, USDC, tc.tickSpacing, tc.precisionFactorAtPriceOne))
 			s.Require().NoError(err)
 
 			pool, err := s.App.ConcentratedLiquidityKeeper.GetPool(s.Ctx, poolID)

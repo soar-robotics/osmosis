@@ -27,6 +27,7 @@ var (
 	DefaultCurrTick         = sdk.NewInt(85176)
 	DefaultCurrPrice        = sdk.NewDec(5000)
 	DefaultCurrSqrtPrice, _ = DefaultCurrPrice.ApproxSqrt() // 70.710678118654752440
+	DefaultPrecisionValue   = sdk.NewInt(-3)
 )
 
 type ConcentratedPoolTestSuite struct {
@@ -162,10 +163,11 @@ func (s *ConcentratedPoolTestSuite) TestApplySwap() {
 // TestNewConcentratedLiquidityPool is a test suite that tests the NewConcentratedLiquidityPool function.
 func (s *ConcentratedPoolTestSuite) TestNewConcentratedLiquidityPool() {
 	type param struct {
-		poolId      uint64
-		denom0      string
-		denom1      string
-		tickSpacing uint64
+		poolId         uint64
+		denom0         string
+		denom1         string
+		tickSpacing    uint64
+		precisionValue sdk.Int
 	}
 
 	tests := []struct {
@@ -180,10 +182,11 @@ func (s *ConcentratedPoolTestSuite) TestNewConcentratedLiquidityPool() {
 		{
 			name: "Happy path",
 			param: param{
-				poolId:      DefaultValidPoolID,
-				denom0:      ETH,
-				denom1:      USDC,
-				tickSpacing: 1,
+				poolId:         DefaultValidPoolID,
+				denom0:         ETH,
+				denom1:         USDC,
+				tickSpacing:    DefaultTickSpacing,
+				precisionValue: DefaultPrecisionValue,
 			},
 			expectedPoolId:      DefaultValidPoolID,
 			expectedDenom0:      ETH,
@@ -193,10 +196,11 @@ func (s *ConcentratedPoolTestSuite) TestNewConcentratedLiquidityPool() {
 		{
 			name: "Non lexicographical order of denoms should get reordered",
 			param: param{
-				poolId:      DefaultValidPoolID,
-				denom0:      USDC,
-				denom1:      ETH,
-				tickSpacing: DefaultTickSpacing,
+				poolId:         DefaultValidPoolID,
+				denom0:         USDC,
+				denom1:         ETH,
+				tickSpacing:    DefaultTickSpacing,
+				precisionValue: DefaultPrecisionValue,
 			},
 			expectedPoolId:      DefaultValidPoolID,
 			expectedDenom0:      ETH,
@@ -206,10 +210,11 @@ func (s *ConcentratedPoolTestSuite) TestNewConcentratedLiquidityPool() {
 		{
 			name: "Error: same denom not allowed",
 			param: param{
-				poolId:      DefaultValidPoolID,
-				denom0:      USDC,
-				denom1:      USDC,
-				tickSpacing: DefaultTickSpacing,
+				poolId:         DefaultValidPoolID,
+				denom0:         USDC,
+				denom1:         USDC,
+				tickSpacing:    DefaultTickSpacing,
+				precisionValue: DefaultPrecisionValue,
 			},
 			expectedErr: fmt.Errorf("cannot have the same asset in a single pool"),
 		},
@@ -221,7 +226,7 @@ func (s *ConcentratedPoolTestSuite) TestNewConcentratedLiquidityPool() {
 			s.Setup()
 
 			// Call NewConcentratedLiquidityPool with the parameters from the current test.
-			pool, err := model.NewConcentratedLiquidityPool(test.param.poolId, test.param.denom0, test.param.denom1, test.param.tickSpacing)
+			pool, err := model.NewConcentratedLiquidityPool(test.param.poolId, test.param.denom0, test.param.denom1, test.param.tickSpacing, test.param.precisionValue)
 
 			if test.expectedErr != nil {
 				// If the test is expected to produce an error, check if it does.

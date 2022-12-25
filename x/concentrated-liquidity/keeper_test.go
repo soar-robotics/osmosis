@@ -27,6 +27,7 @@ var (
 	DefaultAmt1Expected     = sdk.NewInt(5000000000)
 	DefaultLiquidityAmt     = sdk.MustNewDecFromStr("1517818840.967515822610790519")
 	DefaultTickSpacing      = uint64(1)
+	DefaultPrecisionValue   = sdk.NewInt(-3)
 	PoolCreationFee         = swaproutertypes.DefaultParams().PoolCreationFee
 )
 
