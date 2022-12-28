@@ -154,7 +154,6 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 		newValSet = append(newValSet, existing_val_zero_amount)
 		totalTokenAmount = totalTokenAmount.Add(tokenFromShares)
 	}
-	fmt.Println(existingValSet)
 
 	for _, newVals := range newSet {
 		amountToDelegate := newVals.Weight.Mul(totalTokenAmount)
@@ -163,7 +162,6 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 		newValSet = append(newValSet, new_val)
 		existingValSet = append(existingValSet, new_val_zero_amount)
 	}
-	fmt.Println(newSet)
 
 	// calculate the difference between two sets
 	var diffValSet []*valSet
@@ -176,8 +174,6 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 		}
 		diffValSet = append(diffValSet, &diff_val)
 	}
-	fmt.Println(diffValSet)
-
 	// Algorithm starts here
 	for _, diff_val := range diffValSet {
 		for diff_val.amount.GT(sdk.NewDec(0)) {
