@@ -42,3 +42,7 @@ type LockupKeeper interface {
 	ForceUnlock(ctx sdk.Context, lock lockuptypes.PeriodLock) error
 	BeginUnlock(ctx sdk.Context, lockID uint64, coins sdk.Coins) error
 }
+
+type GammKeeper interface {
+	GetPoolDenoms(ctx sdk.Context, poolId uint64) (denoms []string, err error)
+}

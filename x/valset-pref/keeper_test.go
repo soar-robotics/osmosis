@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -113,9 +114,12 @@ func (suite *KeeperTestSuite) SetupLocks(delegator sdk.AccAddress) []lockuptypes
 	suite.FundAcc(delegator, sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000), sdk.NewInt64Coin(appParams.BaseCoinUnit, 100_000_000)})
 
 	// happy lock case
-	TwoWeekDuration, _ := time.ParseDuration("336h")
+	TwoWeekDuration, err := time.ParseDuration("336h")
+	suite.Require().NoError(err)
 	workingLoc, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, osmoToLock, TwoWeekDuration)
 	suite.Require().NoError(err)
+
+	fmt.Println(workingLoc)
 
 	locks = append(locks, workingLoc)
 
@@ -133,7 +137,8 @@ func (suite *KeeperTestSuite) SetupLocks(delegator sdk.AccAddress) []lockuptypes
 	locks = append(locks, lockWithDifferentOwner)
 
 	// lock case where the duration != <= 2 weeks
-	MorethanTwoWeekDuration, _ := time.ParseDuration("337h")
+	MorethanTwoWeekDuration, err := time.ParseDuration("337h")
+	suite.Require().NoError(err)
 	maxDurationLock, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, osmoToLock, MorethanTwoWeekDuration)
 	suite.Require().NoError(err)
 

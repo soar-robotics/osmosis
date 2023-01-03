@@ -10,6 +10,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/osmosis-labs/osmosis/osmomath"
 	appParams "github.com/osmosis-labs/osmosis/v13/app/params"
+	lockuptypes "github.com/osmosis-labs/osmosis/v13/x/lockup/types"
 	"github.com/osmosis-labs/osmosis/v13/x/valset-pref/types"
 )
 
@@ -295,31 +296,9 @@ func (k Keeper) withdrawExistingValSetStakingPosition(ctx sdk.Context, delegator
 // current validator set preference.
 // (Note: Noting that there is an implicit valset preference if you've already staked)
 func (k Keeper) ForceUnlockBondedOsmo(ctx sdk.Context, lockID uint64, delegatorAddr string) (sdk.Coin, error) {
-	// Checks if sender is lock ID owner
-	lock, err := k.lockupKeeper.GetLockByID(ctx, lockID)
+	lock, unlockedOsmoAmount, err := k.validateLockForForceUnlock(ctx, lockID, delegatorAddr)
 	if err != nil {
 		return sdk.Coin{}, err
-	}
-	if lock.GetOwner() != delegatorAddr {
-		return sdk.Coin{}, fmt.Errorf("delegator (%s) and lock owner (%s) does not match", delegatorAddr, lock.Owner)
-	}
-
-	unlockedOsmoAmount := sdk.NewInt(0)
-
-	// check if lock contains osmo tokens
-	for _, lockToken := range lock.Coins {
-		if lockToken.Denom == appParams.BaseCoinUnit {
-			unlockedOsmoAmount = unlockedOsmoAmount.Add(lockToken.Amount)
-		}
-	}
-
-	if unlockedOsmoAmount.LTE(sdk.NewInt(0)) {
-		return sdk.Coin{}, fmt.Errorf("lock does not contain osmo denom, or there isn't enough osmo to unbond")
-	}
-
-	// Checks if lock ID is bonded and ensure that the duration is <= 2 weeks
-	if lock.IsUnlocking() || lock.Duration > time.Hour*24*7*2 {
-		return sdk.Coin{}, fmt.Errorf("the tokens have to bonded and the duration has to be <= 2weeks")
 	}
 
 	// Ensured the lock has no superfluid relation by checking that there are no synthetic locks
@@ -460,4 +439,43 @@ func (k Keeper) FindMax(valPrefs []*valSet) (max valSet, idx int) {
 		}
 	}
 	return max, idx
+}
+
+// check if lock owner matches the delegator, contains only uosmo and is bonded for <= 2weeks
+func (k Keeper) validateLockForForceUnlock(ctx sdk.Context, lockID uint64, delegatorAddr string) (*lockuptypes.PeriodLock, sdk.Int, error) {
+	// Checks if sender is lock ID owner
+	lock, err := k.lockupKeeper.GetLockByID(ctx, lockID)
+	if err != nil {
+		return nil, sdk.Int{}, err
+	}
+	if lock.GetOwner() != delegatorAddr {
+		return nil, sdk.Int{}, fmt.Errorf("delegator (%s) and lock owner (%s) does not match", delegatorAddr, lock.Owner)
+	}
+
+	unlockedOsmoAmount := sdk.NewInt(0)
+
+	// check that lock contains only 1 token
+	coin, err := lock.SingleCoin()
+	if err != nil {
+		return nil, sdk.Int{}, fmt.Errorf("lock fails to meet expected invariant, it contains multiple coins")
+	}
+
+	// TODO: lock tokens can be a gamm shares so, check whether the underlying token is uosmo from gamm share
+	//poolDenoms, err := k.gammKeeper.GetPoolDenoms(ctx, uint64(poolId))
+
+	// check if lock contains osmo tokens and get the uosmo lock amount
+	if coin.Denom == appParams.BaseCoinUnit {
+		unlockedOsmoAmount = unlockedOsmoAmount.Add(coin.Amount)
+	}
+
+	if unlockedOsmoAmount.LTE(sdk.NewInt(0)) {
+		return nil, sdk.Int{}, fmt.Errorf("lock does not contain osmo denom, or there isn't enough osmo to unbond")
+	}
+
+	// Checks if lock ID is bonded and ensure that the duration is <= 2 weeks
+	if lock.IsUnlocking() || lock.Duration > time.Hour*24*7*2 {
+		return nil, sdk.Int{}, fmt.Errorf("the tokens have to bonded and the duration has to be <= 2weeks")
+	}
+
+	return lock, unlockedOsmoAmount, nil
 }
