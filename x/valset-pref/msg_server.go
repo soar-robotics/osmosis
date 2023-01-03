@@ -106,7 +106,7 @@ func (server msgServer) DelegateBondedTokens(goCtx context.Context, msg *types.M
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Message 1: force unlock bonded osmo tokens.
-	unlockedOsmoToken, err := server.keeper.ForceUnlockBondedOsmo(ctx, msg.ID, msg.Delegator)
+	unlockedOsmoToken, err := server.keeper.ForceUnlockBondedOsmo(ctx, msg.LockID, msg.Delegator)
 	if err != nil {
 		return nil, err
 	}

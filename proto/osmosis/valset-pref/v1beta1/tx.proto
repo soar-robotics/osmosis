@@ -120,7 +120,7 @@ message MsgDelegateBondedTokens {
   // delegator is the user who is trying to force unbond osmo and delegate.
   string delegator = 1 [ (gogoproto.moretags) = "yaml:\"delegator\"" ];
   // lockup id of osmo in the pool
-  uint64 ID = 2;
+  uint64 lockID = 2;
 }
 
 message MsgDelegateBondedTokensResponse {}

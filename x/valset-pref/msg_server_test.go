@@ -642,6 +642,12 @@ func (suite *KeeperTestSuite) TestDelegateBondedTokens() {
 			lockId:     testLock[5].ID,
 			expectPass: false,
 		},
+		{
+			name:       "DelegateBondedTokens with multiple asset lock",
+			delegator:  sdk.AccAddress([]byte("addr1---------------")),
+			lockId:     testLock[6].ID,
+			expectPass: false,
+		},
 	}
 
 	for _, test := range tests {

@@ -261,7 +261,7 @@ var _ sdk.Msg = &MsgDelegateBondedTokens{}
 func NewMsgDelegateBondedTokens(delegator sdk.AccAddress, lockId uint64) *MsgDelegateBondedTokens {
 	return &MsgDelegateBondedTokens{
 		Delegator: delegator.String(),
-		ID:        lockId,
+		LockID:    lockId,
 	}
 }
 
