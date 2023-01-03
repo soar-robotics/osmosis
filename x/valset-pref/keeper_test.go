@@ -108,7 +108,7 @@ func (suite *KeeperTestSuite) AllocateRewards(ctx sdk.Context, delegator sdk.Acc
 func (suite *KeeperTestSuite) SetupLocks(delegator sdk.AccAddress) []lockuptypes.PeriodLock {
 	locks := []lockuptypes.PeriodLock{}
 	// Setup lock
-	coinsToLock := sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 10_000_000)}
+	coinToLock := sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 10_000_000)}
 	osmoToLock := sdk.Coins{sdk.NewInt64Coin(appParams.BaseCoinUnit, 10_000_000)}
 	suite.FundAcc(delegator, sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000), sdk.NewInt64Coin(appParams.BaseCoinUnit, 100_000_000)})
 
@@ -119,39 +119,37 @@ func (suite *KeeperTestSuite) SetupLocks(delegator sdk.AccAddress) []lockuptypes
 
 	locks = append(locks, workingLoc)
 
-	// locking with stake denom instad of osmo denom
-	stakeDenomLock, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, coinsToLock, TwoWeekDuration)
+	// locking with stake denom instead of osmo denom
+	stakeDenomLock, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, coinToLock, TwoWeekDuration)
 	suite.Require().NoError(err)
 
 	locks = append(locks, stakeDenomLock)
 
 	// lock case where lock owner != delegation owner
-	suite.FundAcc(sdk.AccAddress([]byte("addr5---------------")), sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 100_000_000)})
-	lockWithDifferentOwner, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, sdk.AccAddress([]byte("addr5---------------")), coinsToLock, TwoWeekDuration)
+	suite.FundAcc(sdk.AccAddress([]byte("addr5---------------")), sdk.Coins{sdk.NewInt64Coin(appParams.BaseCoinUnit, 100_000_000)})
+	lockWithDifferentOwner, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, sdk.AccAddress([]byte("addr5---------------")), osmoToLock, TwoWeekDuration)
 	suite.Require().NoError(err)
 
 	locks = append(locks, lockWithDifferentOwner)
 
 	// lock case where the duration != <= 2 weeks
 	MorethanTwoWeekDuration, _ := time.ParseDuration("337h")
-	maxDurationLock, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, coinsToLock, MorethanTwoWeekDuration)
+	maxDurationLock, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, osmoToLock, MorethanTwoWeekDuration)
 	suite.Require().NoError(err)
 
 	locks = append(locks, maxDurationLock)
 
 	// unbonding locks
-	unbondingLocks, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, coinsToLock, TwoWeekDuration)
+	unbondingLocks, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, osmoToLock, TwoWeekDuration)
 	suite.Require().NoError(err)
 
-	if !unbondingLocks.IsUnlocking() {
-		err := suite.App.LockupKeeper.BeginUnlock(suite.Ctx, unbondingLocks.ID, nil)
-		suite.Require().NoError(err)
-	}
+	err = suite.App.LockupKeeper.BeginUnlock(suite.Ctx, unbondingLocks.ID, nil)
+	suite.Require().NoError(err)
 
 	locks = append(locks, unbondingLocks)
 
 	// synthetic locks
-	syntheticLocks, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, coinsToLock, TwoWeekDuration)
+	syntheticLocks, err := suite.App.LockupKeeper.CreateLock(suite.Ctx, delegator, osmoToLock, TwoWeekDuration)
 	suite.Require().NoError(err)
 
 	err = suite.App.LockupKeeper.CreateSyntheticLockup(suite.Ctx, syntheticLocks.ID, "uosmo", time.Minute, true)

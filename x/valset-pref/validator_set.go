@@ -314,7 +314,7 @@ func (k Keeper) ForceUnlockBondedOsmo(ctx sdk.Context, lockID uint64, delegatorA
 	}
 
 	if unlockedOsmoAmount.LTE(sdk.NewInt(0)) {
-		return sdk.Coin{}, fmt.Errorf("lock doesnot contain osmo denom, or there isn't enough osmo to unbond")
+		return sdk.Coin{}, fmt.Errorf("lock does not contain osmo denom, or there isn't enough osmo to unbond")
 	}
 
 	// Checks if lock ID is bonded and ensure that the duration is <= 2 weeks
