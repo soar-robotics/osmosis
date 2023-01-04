@@ -1,7 +1,6 @@
 package twapcli
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/osmosis-labs/osmosis/osmoutils/osmocli"
-	gammtypes "github.com/osmosis-labs/osmosis/v13/x/gamm/types"
 	"github.com/osmosis-labs/osmosis/v13/x/twap/client/queryproto"
 	"github.com/osmosis-labs/osmosis/v13/x/twap/types"
 )
@@ -41,30 +39,16 @@ Example:
 			if err != nil {
 				return err
 			}
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
-			queryClient := queryproto.NewQueryClient(clientCtx)
-			gammClient := gammtypes.NewQueryClient(clientCtx)
-			liquidity, err := gammClient.TotalPoolLiquidity(cmd.Context(), &gammtypes.QueryTotalPoolLiquidityRequest{PoolId: poolId})
+			quoteDenom, err := getQuoteDenomFromLiquidity(cmd.Context(), clientCtx, poolId, baseDenom)
 			if err != nil {
 				return err
 			}
-			if len(liquidity.Liquidity) != 2 {
-				return fmt.Errorf("pool %d has %d assets of liquidity, CLI support only exists for 2 assets right now.", poolId, len(liquidity.Liquidity))
-			}
-			quoteDenom := ""
-			if liquidity.Liquidity[0].Denom == baseDenom {
-				quoteDenom = liquidity.Liquidity[1].Denom
-			} else if liquidity.Liquidity[1].Denom == baseDenom {
-				quoteDenom = liquidity.Liquidity[0].Denom
-			} else {
-				return fmt.Errorf("pool %d doesn't have provided baseDenom %s, has %s and %s",
-					poolId, baseDenom, liquidity.Liquidity[0], liquidity.Liquidity[1])
-			}
 
+			queryClient := queryproto.NewQueryClient(clientCtx)
 			res, err := queryClient.ArithmeticTwap(cmd.Context(), &queryproto.ArithmeticTwapRequest{
 				PoolId:     poolId,
 				BaseAsset:  baseDenom,
@@ -72,6 +56,7 @@ Example:
 				StartTime:  startTime,
 				EndTime:    &endTime,
 			})
+
 			if err != nil {
 				return err
 			}

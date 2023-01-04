@@ -64,13 +64,15 @@ var (
 
 // we create a pool struct directly to bypass checks in NewStableswapPool()
 func poolStructFromAssets(assets sdk.Coins, scalingFactors []uint64) Pool {
+	scalingFactors, _ = applyScalingFactorMultiplier(scalingFactors)
+
 	p := Pool{
 		Address:            types.NewPoolAddress(defaultPoolId).String(),
 		Id:                 defaultPoolId,
 		PoolParams:         defaultStableswapPoolParams,
 		TotalShares:        sdk.NewCoin(types.GetPoolShareDenom(defaultPoolId), types.InitPoolSharesSupply),
 		PoolLiquidity:      assets,
-		ScalingFactors:     applyScalingFactorMultiplier(scalingFactors),
+		ScalingFactors:     scalingFactors,
 		FuturePoolGovernor: defaultFutureGovernor,
 	}
 	return p

@@ -55,6 +55,7 @@ type TwapRecord struct {
 	P1LastSpotPrice             github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=p1_last_spot_price,json=p1LastSpotPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"p1_last_spot_price"`
 	P0ArithmeticTwapAccumulator github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=p0_arithmetic_twap_accumulator,json=p0ArithmeticTwapAccumulator,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"p0_arithmetic_twap_accumulator"`
 	P1ArithmeticTwapAccumulator github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,9,opt,name=p1_arithmetic_twap_accumulator,json=p1ArithmeticTwapAccumulator,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"p1_arithmetic_twap_accumulator"`
+	GeometricTwapAccumulator    github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=geometric_twap_accumulator,json=geometricTwapAccumulator,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"geometric_twap_accumulator"`
 	// This field contains the time in which the last spot price error occured.
 	// It is used to alert the caller if they are getting a potentially erroneous
 	// TWAP, due to an unforeseen underlying error.
@@ -210,6 +211,16 @@ func (m *TwapRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i--
 	dAtA[i] = 0x5a
 	{
+		size := m.GeometricTwapAccumulator.Size()
+		i -= size
+		if _, err := m.GeometricTwapAccumulator.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTwapRecord(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x52
+	{
 		size := m.P1ArithmeticTwapAccumulator.Size()
 		i -= size
 		if _, err := m.P1ArithmeticTwapAccumulator.MarshalTo(dAtA[i:]); err != nil {
@@ -324,6 +335,8 @@ func (m *TwapRecord) Size() (n int) {
 	l = m.P0ArithmeticTwapAccumulator.Size()
 	n += 1 + l + sovTwapRecord(uint64(l))
 	l = m.P1ArithmeticTwapAccumulator.Size()
+	n += 1 + l + sovTwapRecord(uint64(l))
+	l = m.GeometricTwapAccumulator.Size()
 	n += 1 + l + sovTwapRecord(uint64(l))
 	l = github_com_gogo_protobuf_types.SizeOfStdTime(m.LastErrorTime)
 	n += 1 + l + sovTwapRecord(uint64(l))
@@ -633,6 +646,40 @@ func (m *TwapRecord) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if err := m.P1ArithmeticTwapAccumulator.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field GeometricTwapAccumulator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTwapRecord
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTwapRecord
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTwapRecord
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.GeometricTwapAccumulator.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

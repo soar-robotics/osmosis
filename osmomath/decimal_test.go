@@ -19,6 +19,12 @@ type decimalTestSuite struct {
 	suite.Suite
 }
 
+var (
+	zeroAdditiveErrTolerance = osmomath.ErrTolerance{
+		AdditiveTolerance: sdk.ZeroDec(),
+	}
+)
+
 func TestDecimalTestSuite(t *testing.T) {
 	suite.Run(t, new(decimalTestSuite))
 }

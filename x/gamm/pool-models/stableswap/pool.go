@@ -13,7 +13,10 @@ import (
 	"github.com/osmosis-labs/osmosis/v13/x/gamm/types"
 )
 
-var _ types.PoolI = &Pool{}
+var (
+	_ swaproutertypes.PoolI = &Pool{}
+	_ types.CFMMPoolI       = &Pool{}
+)
 
 type unsortedPoolLiqError struct {
 	ActualLiquidity sdk.Coins
@@ -48,17 +51,20 @@ func NewStableswapPool(poolId uint64,
 		}
 	}
 
-	scalingFactors = applyScalingFactorMultiplier(scalingFactors)
-
-	if err := validateScalingFactors(scalingFactors, len(initialLiquidity)); err != nil {
+	scalingFactors, err := applyScalingFactorMultiplier(scalingFactors)
+	if err != nil {
 		return Pool{}, err
 	}
 
-	if err := validatePoolLiquidity(initialLiquidity, scalingFactors); err != nil {
+	if err = validateScalingFactors(scalingFactors, len(initialLiquidity)); err != nil {
 		return Pool{}, err
 	}
 
-	if err := types.ValidateFutureGovernor(futureGovernor); err != nil {
+	if err = validatePoolLiquidity(initialLiquidity, scalingFactors); err != nil {
+		return Pool{}, err
+	}
+
+	if err = types.ValidateFutureGovernor(futureGovernor); err != nil {
 		return Pool{}, err
 	}
 
@@ -122,8 +128,14 @@ func (p Pool) GetScalingFactors() []uint64 {
 }
 
 // CONTRACT: scaling factors follow the same index with pool liquidity denoms
-func (p Pool) GetScalingFactorByLiquidityIndex(liquidityIndex int) uint64 {
-	return p.ScalingFactors[liquidityIndex]
+func (p Pool) GetScalingFactorByDenom(denom string) uint64 {
+	for i, coin := range p.PoolLiquidity {
+		if denom == coin.Denom {
+			return p.ScalingFactors[i]
+		}
+	}
+
+	return 0
 }
 
 func (p Pool) NumAssets() int {
@@ -133,8 +145,7 @@ func (p Pool) NumAssets() int {
 // scaleCoin returns the BigDec amount of the
 // input token after scaling it by the token's scaling factor
 func (p Pool) scaleCoin(input sdk.Coin, roundingDirection osmomath.RoundingDirection) (osmomath.BigDec, error) {
-	liquidityIndexes := p.getLiquidityIndexMap()
-	scalingFactor := p.GetScalingFactorByLiquidityIndex(liquidityIndexes[input.Denom])
+	scalingFactor := p.GetScalingFactorByDenom(input.Denom)
 	scaledAmount, err := osmomath.DivIntByU64ToBigDec(input.Amount, scalingFactor, roundingDirection)
 	if err != nil {
 		return osmomath.BigDec{}, err
@@ -145,10 +156,7 @@ func (p Pool) scaleCoin(input sdk.Coin, roundingDirection osmomath.RoundingDirec
 // getDescaledPoolAmt descales the passed in amount
 // by the scaling factor of the passed in denom
 func (p Pool) getDescaledPoolAmt(denom string, amount osmomath.BigDec) sdk.Dec {
-	liquidityIndexes := p.getLiquidityIndexMap()
-	liquidityIndex := liquidityIndexes[denom]
-
-	scalingFactor := p.GetScalingFactorByLiquidityIndex(liquidityIndex)
+	scalingFactor := p.GetScalingFactorByDenom(denom)
 
 	return amount.MulInt64(int64(scalingFactor)).SDKDec()
 }
@@ -414,13 +422,16 @@ func (p *Pool) SetScalingFactors(ctx sdk.Context, scalingFactors []uint64, sende
 		return types.ErrNotScalingFactorGovernor
 	}
 
-	scalingFactors = applyScalingFactorMultiplier(scalingFactors)
-
-	if err := validateScalingFactors(scalingFactors, p.PoolLiquidity.Len()); err != nil {
+	scalingFactors, err := applyScalingFactorMultiplier(scalingFactors)
+	if err != nil {
 		return err
 	}
 
-	if err := validatePoolLiquidity(p.PoolLiquidity, scalingFactors); err != nil {
+	if err = validateScalingFactors(scalingFactors, p.PoolLiquidity.Len()); err != nil {
+		return err
+	}
+
+	if err = validatePoolLiquidity(p.PoolLiquidity, scalingFactors); err != nil {
 		return err
 	}
 
@@ -484,11 +495,15 @@ func validatePoolLiquidity(liquidity sdk.Coins, scalingFactors []uint64) error {
 	return nil
 }
 
-func applyScalingFactorMultiplier(scalingFactors []uint64) []uint64 {
+func applyScalingFactorMultiplier(scalingFactors []uint64) ([]uint64, error) {
 	newScalingFactors := make([]uint64, len(scalingFactors))
-	for i := range scalingFactors {
-		newScalingFactors[i] = scalingFactors[i] * types.ScalingFactorMultiplier
+	for i, scalingFactor := range scalingFactors {
+		newScalingFactors[i] = scalingFactor * types.ScalingFactorMultiplier
+
+		if newScalingFactors[i] < scalingFactor {
+			return nil, types.ErrInvalidScalingFactors
+		}
 	}
 
-	return newScalingFactors
+	return newScalingFactors, nil
 }

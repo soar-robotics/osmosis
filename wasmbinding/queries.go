@@ -4,28 +4,21 @@ import (
 	"fmt"
 	"time"
 
-	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/osmosis-labs/osmosis/v13/wasmbinding/bindings"
-	gammkeeper "github.com/osmosis-labs/osmosis/v13/x/gamm/keeper"
 	gammtypes "github.com/osmosis-labs/osmosis/v13/x/gamm/types"
 	tokenfactorykeeper "github.com/osmosis-labs/osmosis/v13/x/tokenfactory/keeper"
-	twapkeeper "github.com/osmosis-labs/osmosis/v13/x/twap"
 )
 
 type QueryPlugin struct {
-	gammKeeper         *gammkeeper.Keeper
-	twapKeeper         *twapkeeper.Keeper
 	tokenFactoryKeeper *tokenfactorykeeper.Keeper
 }
 
 // NewQueryPlugin returns a reference to a new QueryPlugin.
-func NewQueryPlugin(gk *gammkeeper.Keeper, tk *twapkeeper.Keeper, tfk *tokenfactorykeeper.Keeper) *QueryPlugin {
+func NewQueryPlugin(tfk *tokenfactorykeeper.Keeper) *QueryPlugin {
 	return &QueryPlugin{
-		gammKeeper:         gk,
-		twapKeeper:         tk,
 		tokenFactoryKeeper: tfk,
 	}
 }

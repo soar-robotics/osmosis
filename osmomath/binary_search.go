@@ -134,19 +134,18 @@ func (e ErrTolerance) CompareBigDec(expected BigDec, actual BigDec) int {
 // Binary search inputs between [lowerbound, upperbound] to a monotonic increasing function f.
 // We stop once f(found_input) meets the ErrTolerance constraints.
 // If we perform more than maxIterations (or equivalently lowerbound = upperbound), we return an error.
-func BinarySearch(f func(input sdk.Int) (sdk.Int, error),
+func BinarySearch(f func(sdk.Int) (sdk.Int, error),
 	lowerbound sdk.Int,
 	upperbound sdk.Int,
 	targetOutput sdk.Int,
 	errTolerance ErrTolerance,
 	maxIterations int,
 ) (sdk.Int, error) {
-	// Setup base case of loop
-	curEstimate := lowerbound.Add(upperbound).QuoRaw(2)
-	curOutput, err := f(curEstimate)
-	if err != nil {
-		return sdk.Int{}, err
-	}
+	var (
+		curEstimate, curOutput sdk.Int
+		err                    error
+	)
+
 	curIteration := 0
 	for ; curIteration < maxIterations; curIteration += 1 {
 		compRes := errTolerance.Compare(targetOutput, curOutput)
@@ -161,6 +160,15 @@ func BinarySearch(f func(input sdk.Int) (sdk.Int, error),
 		curOutput, err = f(curEstimate)
 		if err != nil {
 			return sdk.Int{}, err
+		}
+
+		compRes := errTolerance.Compare(targetOutput, curOutput)
+		if compRes < 0 {
+			upperbound = curEstimate
+		} else if compRes > 0 {
+			lowerbound = curEstimate
+		} else {
+			return curEstimate, nil
 		}
 	}
 

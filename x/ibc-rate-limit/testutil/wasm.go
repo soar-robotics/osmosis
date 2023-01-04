@@ -1,8 +1,9 @@
 package osmosisibctesting
 
 import (
+	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/stretchr/testify/require"
 
@@ -13,6 +14,8 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	"github.com/osmosis-labs/osmosis/v13/x/ibc-rate-limit/types"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/osmosis-labs/osmosis/v13/x/ibc-rate-limit/types"
 )
 
 func (chain *TestChain) StoreContractCode(suite *suite.Suite, path string) {
@@ -26,6 +29,8 @@ func (chain *TestChain) StoreContractCode(suite *suite.Suite, path string) {
 	src := wasmtypes.StoreCodeProposalFixture(func(p *wasmtypes.StoreCodeProposal) {
 		p.RunAs = addr.String()
 		p.WASMByteCode = wasmCode
+		checksum := sha256.Sum256(wasmCode)
+		p.CodeHash = checksum[:]
 	})
 
 	// when stored

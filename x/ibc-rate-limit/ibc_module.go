@@ -38,7 +38,7 @@ func (im *IBCModule) OnChanOpenInit(ctx sdk.Context,
 	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
-) error {
+) (string, error) {
 	return im.app.OnChanOpenInit(
 		ctx,
 		order,
@@ -125,7 +125,7 @@ func (im *IBCModule) OnRecvPacket(
 	relayer sdk.AccAddress,
 ) exported.Acknowledgement {
 	if err := ValidateReceiverAddress(packet); err != nil {
-		return channeltypes.NewErrorAcknowledgement(err.Error())
+		return osmoutils.NewStringErrorAcknowledgement(err.Error())
 	}
 
 	contract := im.ics4Middleware.GetParams(ctx)
@@ -231,4 +231,8 @@ func (im *IBCModule) WriteAcknowledgement(
 	ack exported.Acknowledgement,
 ) error {
 	return im.ics4Middleware.WriteAcknowledgement(ctx, chanCap, packet, ack)
+}
+
+func (im *IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
+	return im.ics4Middleware.GetAppVersion(ctx, portID, channelID)
 }

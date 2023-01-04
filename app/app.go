@@ -6,7 +6,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
+	"github.com/osmosis-labs/osmosis/osmoutils"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
 	"github.com/gorilla/mux"
@@ -45,6 +50,7 @@ import (
 	v11 "github.com/osmosis-labs/osmosis/v13/app/upgrades/v11"
 	v12 "github.com/osmosis-labs/osmosis/v13/app/upgrades/v12"
 	v13 "github.com/osmosis-labs/osmosis/v13/app/upgrades/v13"
+	v14 "github.com/osmosis-labs/osmosis/v13/app/upgrades/v14"
 	v3 "github.com/osmosis-labs/osmosis/v13/app/upgrades/v3"
 	v4 "github.com/osmosis-labs/osmosis/v13/app/upgrades/v4"
 	v5 "github.com/osmosis-labs/osmosis/v13/app/upgrades/v5"
@@ -91,7 +97,7 @@ var (
 
 	// _ sdksimapp.App = (*OsmosisApp)(nil)
 
-	Upgrades = []upgrades.Upgrade{v4.Upgrade, v5.Upgrade, v7.Upgrade, v9.Upgrade, v11.Upgrade, v12.Upgrade, v13.Upgrade}
+	Upgrades = []upgrades.Upgrade{v4.Upgrade, v5.Upgrade, v7.Upgrade, v9.Upgrade, v11.Upgrade, v12.Upgrade, v13.Upgrade, v14.Upgrade}
 	Forks    = []upgrades.Fork{v3.Fork, v6.Fork, v8.Fork, v10.Fork}
 )
 
@@ -143,6 +149,16 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, ".osmosisd")
 }
 
+// initReusablePackageInjections injects data available within osmosis into the reusable packages.
+// This is done to ensure they can be built without depending on at compilation time and thus imported by other chains
+// This should always be called before any other function to avoid inconsistent data
+func initReusablePackageInjections() {
+	// Inject ClawbackVestingAccount account type into osmoutils
+	osmoutils.OsmoUtilsExtraAccountTypes = map[reflect.Type]struct{}{
+		reflect.TypeOf(&vestingtypes.ClawbackVestingAccount{}): {},
+	}
+}
+
 // NewOsmosisApp returns a reference to an initialized Osmosis.
 func NewOsmosisApp(
 	logger log.Logger,
@@ -178,10 +194,8 @@ func NewOsmosisApp(
 
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
-
 	// Uncomment this for debugging contracts. In the future this could be made into a param passed by the tests
-	//wasmConfig.ContractDebugMode = true
-
+	// wasmConfig.ContractDebugMode = true
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}

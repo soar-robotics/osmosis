@@ -38,19 +38,27 @@ import (
 	ibcratelimit "github.com/osmosis-labs/osmosis/v13/x/ibc-rate-limit"
 	ibcratelimittypes "github.com/osmosis-labs/osmosis/v13/x/ibc-rate-limit/types"
 
-	icahost "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts/host/types"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v3/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
-	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
-	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	porttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
-	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
+	downtimedetector "github.com/osmosis-labs/osmosis/v13/x/downtime-detector"
+	downtimetypes "github.com/osmosis-labs/osmosis/v13/x/downtime-detector/types"
+	ibcratelimit "github.com/osmosis-labs/osmosis/v13/x/ibc-rate-limit"
+	ibcratelimittypes "github.com/osmosis-labs/osmosis/v13/x/ibc-rate-limit/types"
+	"github.com/osmosis-labs/osmosis/v13/x/swaprouter"
+	swaproutertypes "github.com/osmosis-labs/osmosis/v13/x/swaprouter/types"
+	ibchooks "github.com/osmosis-labs/osmosis/x/ibc-hooks"
+
+	icahost "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts/host/types"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v4/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
+	ibcclient "github.com/cosmos/ibc-go/v4/modules/core/02-client"
+	ibcclienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
+	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
+	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
 
 	// IBC Transfer: Defines the "transfer" IBC port
-	transfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
+	transfer "github.com/cosmos/ibc-go/v4/modules/apps/transfer"
 
 	_ "github.com/osmosis-labs/osmosis/v13/client/docs/statik"
 	owasm "github.com/osmosis-labs/osmosis/v13/wasmbinding"
@@ -188,6 +196,10 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 	)
 	appKeepers.DistrKeeper = &distrKeeper
 
+	appKeepers.DowntimeKeeper = downtimedetector.NewKeeper(
+		appKeepers.keys[downtimetypes.StoreKey],
+	)
+
 	slashingKeeper := slashingkeeper.NewKeeper(
 		appCodec,
 		appKeepers.keys[slashingtypes.StoreKey],
@@ -239,7 +251,9 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 	gammKeeper := gammkeeper.NewKeeper(
 		appCodec, appKeepers.keys[gammtypes.StoreKey],
 		appKeepers.GetSubspace(gammtypes.ModuleName),
-		appKeepers.AccountKeeper, appKeepers.BankKeeper, appKeepers.DistrKeeper)
+		appKeepers.AccountKeeper,
+		// TODO: Add a mintcoins restriction
+		appKeepers.BankKeeper, appKeepers.DistrKeeper)
 	appKeepers.GAMMKeeper = &gammKeeper
 
 	appKeepers.TwapKeeper = twap.NewKeeper(
@@ -247,6 +261,25 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 		appKeepers.tkeys[twaptypes.TransientStoreKey],
 		appKeepers.GetSubspace(twaptypes.ModuleName),
 		appKeepers.GAMMKeeper)
+
+	appKeepers.ConcentratedLiquidityKeeper = concentratedliquidity.NewKeeper(
+		appCodec,
+		appKeepers.keys[concentratedliquiditytypes.StoreKey],
+		appKeepers.BankKeeper,
+		appKeepers.GetSubspace(concentratedliquiditytypes.ModuleName),
+	)
+
+	appKeepers.SwapRouterKeeper = swaprouter.NewKeeper(
+		appKeepers.keys[swaproutertypes.StoreKey],
+		appKeepers.GetSubspace(swaproutertypes.ModuleName),
+		appKeepers.GAMMKeeper,
+		appKeepers.ConcentratedLiquidityKeeper,
+		appKeepers.BankKeeper,
+		appKeepers.AccountKeeper,
+		appKeepers.DistrKeeper,
+	)
+	appKeepers.GAMMKeeper.SetPoolManager(appKeepers.SwapRouterKeeper)
+	appKeepers.ConcentratedLiquidityKeeper.SetSwapRouterKeeper(appKeepers.SwapRouterKeeper)
 
 	appKeepers.LockupKeeper = lockupkeeper.NewKeeper(
 		appKeepers.keys[lockuptypes.StoreKey],
@@ -257,14 +290,18 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 
 	appKeepers.EpochsKeeper = epochskeeper.NewKeeper(appKeepers.keys[epochstypes.StoreKey])
 
+	protorevKeeper := protorevkeeper.NewKeeper(
+		appCodec, appKeepers.keys[protorevtypes.StoreKey],
+		appKeepers.GetSubspace(protorevtypes.ModuleName),
+		appKeepers.AccountKeeper, appKeepers.BankKeeper, appKeepers.GAMMKeeper, appKeepers.EpochsKeeper, appKeepers.SwapRouterKeeper)
+	appKeepers.ProtoRevKeeper = &protorevKeeper
+
 	txFeesKeeper := txfeeskeeper.NewKeeper(
 		appKeepers.AccountKeeper,
 		appKeepers.BankKeeper,
 		appKeepers.keys[txfeestypes.StoreKey],
+		appKeepers.SwapRouterKeeper,
 		appKeepers.GAMMKeeper,
-		appKeepers.GAMMKeeper,
-		txfeestypes.FeeCollectorName,
-		txfeestypes.NonNativeFeeCollectorName,
 	)
 	appKeepers.TxFeesKeeper = &txFeesKeeper
 
@@ -301,7 +338,7 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 		appKeepers.BankKeeper,
 		appKeepers.IncentivesKeeper,
 		appKeepers.DistrKeeper,
-		appKeepers.GAMMKeeper,
+		appKeepers.SwapRouterKeeper,
 	)
 	appKeepers.PoolIncentivesKeeper = &poolIncentivesKeeper
 	appKeepers.GAMMKeeper.SetPoolIncentivesKeeper(appKeepers.PoolIncentivesKeeper)
@@ -319,7 +356,7 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 	// if we want to allow any custom callbacks
 	supportedFeatures := "iterator,staking,stargate,osmosis,cosmwasm_1_1"
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(appKeepers.GAMMKeeper, appKeepers.BankKeeper, appKeepers.TwapKeeper, appKeepers.TokenFactoryKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(appKeepers.BankKeeper, appKeepers.TokenFactoryKeeper), wasmOpts...)
 	wasmOpts = append(owasm.RegisterStargateQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	wasmKeeper := wasm.NewKeeper(
@@ -349,7 +386,7 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 	appKeepers.Ics20WasmHooks.ContractKeeper = appKeepers.ContractKeeper
 
 	// wire up x/wasm to IBC
-	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(appKeepers.WasmKeeper, appKeepers.IBCKeeper.ChannelKeeper))
+	ibcRouter.AddRoute(wasm.ModuleName, wasm.NewIBCHandler(appKeepers.WasmKeeper, appKeepers.IBCKeeper.ChannelKeeper, appKeepers.IBCKeeper.ChannelKeeper))
 	appKeepers.IBCKeeper.SetRouter(ibcRouter)
 
 	// register the proposal types
@@ -493,12 +530,15 @@ func (appKeepers *AppKeepers) initParamsKeeper(appCodec codec.BinaryCodec, legac
 	paramsKeeper.Subspace(incentivestypes.ModuleName)
 	paramsKeeper.Subspace(lockuptypes.ModuleName)
 	paramsKeeper.Subspace(poolincentivestypes.ModuleName)
+	paramsKeeper.Subspace(protorevtypes.ModuleName)
 	paramsKeeper.Subspace(superfluidtypes.ModuleName)
+	paramsKeeper.Subspace(swaproutertypes.ModuleName)
 	paramsKeeper.Subspace(gammtypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 	paramsKeeper.Subspace(twaptypes.ModuleName)
 	paramsKeeper.Subspace(ibcratelimittypes.ModuleName)
+	paramsKeeper.Subspace(concentratedliquiditytypes.ModuleName)
 
 	return paramsKeeper
 }
@@ -554,6 +594,7 @@ func (appKeepers *AppKeepers) SetupHooks() {
 			appKeepers.SuperfluidKeeper.Hooks(),
 			appKeepers.IncentivesKeeper.Hooks(),
 			appKeepers.MintKeeper.Hooks(),
+			appKeepers.ProtoRevKeeper.EpochHooks(),
 		),
 	)
 
@@ -572,6 +613,7 @@ func KVStoreKeys() []string {
 		stakingtypes.StoreKey,
 		minttypes.StoreKey,
 		distrtypes.StoreKey,
+		downtimetypes.StoreKey,
 		slashingtypes.StoreKey,
 		govtypes.StoreKey,
 		paramstypes.StoreKey,
@@ -587,6 +629,8 @@ func KVStoreKeys() []string {
 		incentivestypes.StoreKey,
 		epochstypes.StoreKey,
 		poolincentivestypes.StoreKey,
+		concentratedliquiditytypes.StoreKey,
+		swaproutertypes.StoreKey,
 		authzkeeper.StoreKey,
 		txfeestypes.StoreKey,
 		superfluidtypes.StoreKey,

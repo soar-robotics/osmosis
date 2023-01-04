@@ -3,9 +3,9 @@ package keepers
 import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
-	transfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer"
-	ibc "github.com/cosmos/ibc-go/v3/modules/core"
-	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
+	transfer "github.com/cosmos/ibc-go/v4/modules/apps/transfer"
+	ibc "github.com/cosmos/ibc-go/v4/modules/core"
+	ibcclientclient "github.com/cosmos/ibc-go/v4/modules/core/02-client/client"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -25,7 +25,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	ica "github.com/cosmos/ibc-go/v3/modules/apps/27-interchain-accounts"
+	ica "github.com/cosmos/ibc-go/v4/modules/apps/27-interchain-accounts"
 
 	_ "github.com/osmosis-labs/osmosis/v13/client/docs/statik"
 	"github.com/osmosis-labs/osmosis/v13/x/epochs"
@@ -37,6 +37,7 @@ import (
 	"github.com/osmosis-labs/osmosis/v13/x/mint"
 	poolincentives "github.com/osmosis-labs/osmosis/v13/x/pool-incentives"
 	poolincentivesclient "github.com/osmosis-labs/osmosis/v13/x/pool-incentives/client"
+	"github.com/osmosis-labs/osmosis/v13/x/protorev"
 	superfluid "github.com/osmosis-labs/osmosis/v13/x/superfluid"
 	superfluidclient "github.com/osmosis-labs/osmosis/v13/x/superfluid/client"
 	"github.com/osmosis-labs/osmosis/v13/x/tokenfactory"
@@ -52,6 +53,7 @@ var AppModuleBasics = []module.AppModuleBasic{
 	capability.AppModuleBasic{},
 	staking.AppModuleBasic{},
 	mint.AppModuleBasic{},
+	downtimemodule.AppModuleBasic{},
 	distr.AppModuleBasic{},
 	gov.NewAppModuleBasic(
 		append(
@@ -79,7 +81,10 @@ var AppModuleBasics = []module.AppModuleBasic{
 	transfer.AppModuleBasic{},
 	vesting.AppModuleBasic{},
 	gamm.AppModuleBasic{},
+	swaprouter.AppModuleBasic{},
 	twapmodule.AppModuleBasic{},
+	concentratedliquidity.AppModuleBasic{},
+	protorev.AppModuleBasic{},
 	txfees.AppModuleBasic{},
 	incentives.AppModuleBasic{},
 	lockup.AppModuleBasic{},

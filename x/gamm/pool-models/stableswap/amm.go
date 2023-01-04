@@ -433,7 +433,7 @@ func (p *Pool) calcInAmtGivenOut(tokenOut sdk.Coin, tokenInDenom string, swapFee
 // calcSingleAssetJoinShares calculates the number of LP shares that
 // should be granted given the passed in single-token input (non-mutative)
 func (p *Pool) calcSingleAssetJoinShares(tokenIn sdk.Coin, swapFee sdk.Dec) (sdk.Int, error) {
-	poolWithAddedLiquidityAndShares := func(newLiquidity sdk.Coin, newShares sdk.Int) types.PoolI {
+	poolWithAddedLiquidityAndShares := func(newLiquidity sdk.Coin, newShares sdk.Int) types.CFMMPoolI {
 		paCopy := p.Copy()
 		paCopy.updatePoolForJoin(sdk.NewCoins(newLiquidity), newShares)
 		return &paCopy
@@ -488,6 +488,7 @@ func (p *Pool) joinPoolSharesInternal(ctx sdk.Context, tokensIn sdk.Coins, swapF
 	if !tokensIn.DenomsSubsetOf(p.GetTotalPoolLiquidity(ctx)) {
 		return sdk.ZeroInt(), sdk.NewCoins(), errors.New("attempted joining pool with assets that do not exist in pool")
 	}
+
 	if len(tokensIn) == 1 && tokensIn[0].Amount.GT(sdk.OneInt()) {
 		numShares, err = p.calcSingleAssetJoinShares(tokensIn[0], swapFee)
 		if err != nil {
@@ -506,6 +507,15 @@ func (p *Pool) joinPoolSharesInternal(ctx sdk.Context, tokensIn sdk.Coins, swapF
 	} else if len(tokensIn) != p.NumAssets() {
 		return sdk.ZeroInt(), sdk.NewCoins(), errors.New(
 			"stableswap pool only supports LP'ing with one asset, or all assets in pool")
+	} else {
+		// Add all exact coins we can (no swap). ctx arg doesn't matter for Stableswap
+		var remCoins sdk.Coins
+		numShares, remCoins, err = cfmm_common.MaximalExactRatioJoin(p, sdk.Context{}, tokensIn)
+		if err != nil {
+			return sdk.ZeroInt(), sdk.NewCoins(), err
+		}
+
+		tokensJoined = tokensIn.Sub(remCoins)
 	}
 
 	// Add all exact coins we can (no swap). ctx arg doesn't matter for Stableswap

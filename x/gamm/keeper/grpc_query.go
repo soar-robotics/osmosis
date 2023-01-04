@@ -108,12 +108,12 @@ func (q Querier) Pools(
 	}, nil
 }
 
-// NumPools returns total number of pools.
+// TODO: mark deprecated and move to swaprouter.
 func (q Querier) NumPools(ctx context.Context, _ *types.QueryNumPoolsRequest) (*types.QueryNumPoolsResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	return &types.QueryNumPoolsResponse{
-		NumPools: q.Keeper.GetNextPoolId(sdkCtx) - 1,
+		NumPools: q.poolManager.GetNextPoolId(sdkCtx) - 1,
 	}, nil
 }
 
@@ -125,8 +125,13 @@ func (q Querier) PoolType(ctx context.Context, req *types.QueryPoolTypeRequest) 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	poolType, err := q.Keeper.GetPoolType(sdkCtx, req.PoolId)
 
+	poolTypeStr, ok := swaproutertypes.PoolType_name[int32(poolType)]
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "invalid pool type: %d", poolType)
+	}
+
 	return &types.QueryPoolTypeResponse{
-		PoolType: poolType,
+		PoolType: poolTypeStr,
 	}, err
 }
 
@@ -207,7 +212,6 @@ func (q Querier) PoolsWithFilter(ctx context.Context, req *types.QueryPoolsWithF
 
 		return true, nil
 	})
-
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -353,6 +357,8 @@ func (q Querier) SpotPrice(ctx context.Context, req *types.QuerySpotPriceRequest
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
+	// Note: the base and quote asset argument order is intentionally incorrect
+	// due to a historic bug in the original implementation.
 	sp, err := q.Keeper.CalculateSpotPrice(sdkCtx, req.PoolId, req.BaseAssetDenom, req.QuoteAssetDenom)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

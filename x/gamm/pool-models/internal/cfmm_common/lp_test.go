@@ -81,7 +81,7 @@ func TestCalcExitPool(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		pool          gammtypes.PoolI
+		pool          gammtypes.CFMMPoolI
 		exitingShares sdk.Int
 		expError      bool
 	}{
@@ -149,14 +149,14 @@ func TestMaximalExactRatioJoin(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		pool        func() gammtypes.PoolI
+		pool        func() swaproutertypes.PoolI
 		tokensIn    sdk.Coins
 		expNumShare sdk.Int
 		expRemCoin  sdk.Coins
 	}{
 		{
 			name: "two asset pool, same tokenIn ratio",
-			pool: func() gammtypes.PoolI {
+			pool: func() swaproutertypes.PoolI {
 				balancerPool, err := balancer.NewBalancerPool(
 					1,
 					balancer.PoolParams{SwapFee: sdk.ZeroDec(), ExitFee: sdk.ZeroDec()},
@@ -173,7 +173,7 @@ func TestMaximalExactRatioJoin(t *testing.T) {
 		},
 		{
 			name: "two asset pool, different tokenIn ratio with pool",
-			pool: func() gammtypes.PoolI {
+			pool: func() swaproutertypes.PoolI {
 				balancerPool, err := balancer.NewBalancerPool(
 					1,
 					balancer.PoolParams{SwapFee: sdk.ZeroDec(), ExitFee: sdk.ZeroDec()},

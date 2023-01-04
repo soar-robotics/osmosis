@@ -40,6 +40,29 @@ func (q Querier) ArithmeticTwapToNow(ctx sdk.Context,
 	return &queryproto.ArithmeticTwapToNowResponse{ArithmeticTwap: twap}, err
 }
 
+func (q Querier) GeometricTwap(ctx sdk.Context,
+	req queryproto.GeometricTwapRequest,
+) (*queryproto.GeometricTwapResponse, error) {
+	if req.EndTime == nil {
+		req.EndTime = &time.Time{}
+	}
+	if (*req.EndTime == time.Time{}) {
+		*req.EndTime = ctx.BlockTime()
+	}
+
+	twap, err := q.K.GetGeometricTwap(ctx, req.PoolId, req.BaseAsset, req.QuoteAsset, req.StartTime, *req.EndTime)
+
+	return &queryproto.GeometricTwapResponse{GeometricTwap: twap}, err
+}
+
+func (q Querier) GeometricTwapToNow(ctx sdk.Context,
+	req queryproto.GeometricTwapToNowRequest,
+) (*queryproto.GeometricTwapToNowResponse, error) {
+	twap, err := q.K.GetGeometricTwapToNow(ctx, req.PoolId, req.BaseAsset, req.QuoteAsset, req.StartTime)
+
+	return &queryproto.GeometricTwapToNowResponse{GeometricTwap: twap}, err
+}
+
 func (q Querier) Params(ctx sdk.Context,
 	req queryproto.ParamsRequest,
 ) (*queryproto.ParamsResponse, error) {
