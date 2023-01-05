@@ -10,7 +10,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/osmosis-labs/osmosis/osmomath"
 	appParams "github.com/osmosis-labs/osmosis/v13/app/params"
-	gammtypes "github.com/osmosis-labs/osmosis/v13/x/gamm/types"
 	lockuptypes "github.com/osmosis-labs/osmosis/v13/x/lockup/types"
 	"github.com/osmosis-labs/osmosis/v13/x/valset-pref/types"
 )
@@ -461,18 +460,12 @@ func (k Keeper) validateLockForForceUnlock(ctx sdk.Context, lockID uint64, deleg
 		return nil, sdk.Int{}, fmt.Errorf("lock fails to meet expected invariant, it contains multiple coins")
 	}
 
-	// lock tokens can be a gamm shares so, check whether the underlying token is uosmo
-	poolId := gammtypes.MustGetPoolIdFromShareDenom(coin.Denom)
-	poolDenom, err := k.gammKeeper.GetPoolDenoms(ctx, uint64(poolId))
-	if err != nil {
-		return nil, sdk.Int{}, fmt.Errorf("couldn't get osmo denom from pool denoms")
-	}
-
-	// get the uosmo lock amount
-	if poolDenom[0] == appParams.BaseCoinUnit {
+	// check that the lock denom is uosmo
+	if coin.Denom == appParams.BaseCoinUnit {
 		unlockedOsmoAmount = unlockedOsmoAmount.Add(coin.Amount)
 	}
 
+	// check if there is enough uosmo token in the lock
 	if unlockedOsmoAmount.LTE(sdk.NewInt(0)) {
 		return nil, sdk.Int{}, fmt.Errorf("lock does not contain osmo denom, or there isn't enough osmo to unbond")
 	}
