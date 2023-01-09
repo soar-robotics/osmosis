@@ -115,7 +115,7 @@ func (suite *KeeperTestSuite) PrepareExistingDelegations(ctx sdk.Context, valAdd
 		if !found {
 			return fmt.Errorf("validator not found %s", validator)
 		}
-		fmt.Println("EXISTING VALIDATOR: ", valAddrs)
+
 		// Delegate the unbonded tokens
 		_, err = suite.App.StakingKeeper.Delegate(ctx, delegator, tokenAmt, stakingtypes.Unbonded, validator, true)
 		if err != nil {

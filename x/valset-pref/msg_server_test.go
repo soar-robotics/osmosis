@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	valPref "github.com/osmosis-labs/osmosis/v14/x/valset-pref"
 	"github.com/osmosis-labs/osmosis/v14/x/valset-pref/types"
@@ -310,8 +308,8 @@ func (suite *KeeperTestSuite) TestRedelegateToValidatorSet() {
 		newPreferences              []types.ValidatorPreference
 		amountToDelegate            sdk.Coin  // amount to delegate
 		expectedShares              []sdk.Dec // expected shares after delegation
-		setExistingDelegation       bool
-		setExistingValSetDelegation bool
+		setExistingDelegation       bool      // ensures that there is existing delegations (non valset)
+		setExistingValSetDelegation bool      // ensures that there is existing valset delegation
 		expectPass                  bool
 	}{
 		{
@@ -342,7 +340,7 @@ func (suite *KeeperTestSuite) TestRedelegateToValidatorSet() {
 			newPreferences: []types.ValidatorPreference{
 				{
 					ValOperAddress: valAddrs[0],
-					Weight:         sdk.NewDecWithPrec(2, 1),
+					Weight:         sdk.NewDecWithPrec(3, 1),
 				},
 				{
 					ValOperAddress: valAddrs[1],
@@ -350,15 +348,14 @@ func (suite *KeeperTestSuite) TestRedelegateToValidatorSet() {
 				},
 				{
 					ValOperAddress: valAddrs[2],
-					Weight:         sdk.NewDecWithPrec(6, 1),
+					Weight:         sdk.NewDecWithPrec(5, 1),
 				},
 			},
-			amountToDelegate:            sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(20_000_000)),
-			setExistingValSetDelegation: true,
-			expectPass:                  false, // first redelegation already in progress so must end that first
+			amountToDelegate: sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(20_000_000)),
+			expectPass:       false, // first redelegation already in progress so must end that first
 		},
 		{
-			name:      "redelegate to new set, but one validator from old set with different delegator",
+			name:      "redelegate to new set, but one validator from old set",
 			delegator: sdk.AccAddress([]byte("addr1---------------")),
 			newPreferences: []types.ValidatorPreference{
 				{
@@ -374,29 +371,9 @@ func (suite *KeeperTestSuite) TestRedelegateToValidatorSet() {
 					Weight:         sdk.NewDecWithPrec(2, 1),
 				},
 			},
-			amountToDelegate:            sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(20_000_000)),
-			expectedShares:              []sdk.Dec{sdk.NewDec(10_000_000), sdk.NewDec(6_000_000), sdk.NewDec(4_000_000)},
-			setExistingValSetDelegation: true,
-			expectPass:                  false, // this fails because valAddrs[1] is being redelegated to from first test
-		},
-		{
-			name:      "Redelegate to the different set of validators different weights, same delegator",
-			delegator: sdk.AccAddress([]byte("addr1---------------")),
-			newPreferences: []types.ValidatorPreference{
-				{
-					ValOperAddress: valAddrs[3],
-					Weight:         sdk.NewDecWithPrec(5, 1),
-				},
-				{
-					ValOperAddress: valAddrs[4],
-					Weight:         sdk.NewDecWithPrec(3, 1),
-				},
-				{
-					ValOperAddress: valAddrs[5],
-					Weight:         sdk.NewDecWithPrec(2, 1),
-				},
-			},
-			expectPass: false, // redelegation is already in progress so cannot redelegate until that's over
+			amountToDelegate: sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(20_000_000)),
+			expectedShares:   []sdk.Dec{sdk.NewDec(10_000_000), sdk.NewDec(6_000_000), sdk.NewDec(4_000_000)},
+			expectPass:       false, // this fails because valAddrs[1] is being redelegated to in first test
 		},
 		{
 			name:      "Redelegate to new valset with one existing delegation validator",
@@ -462,7 +439,6 @@ func (suite *KeeperTestSuite) TestRedelegateToValidatorSet() {
 				}
 			} else {
 				suite.Require().Error(err)
-				fmt.Println(err)
 			}
 		})
 	}

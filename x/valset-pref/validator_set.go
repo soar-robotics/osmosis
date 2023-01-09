@@ -133,8 +133,6 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 	var newValSet []valSet
 	totalTokenAmount := sdk.NewDec(0)
 
-	existingSet = k.appendExistingDelegationPositions(ctx, delegator, existingSet)
-
 	// Rearranging the exisingValSet and newValSet to to add extra validator padding
 	for _, existingVals := range existingSet {
 		valAddr, validator, err := k.GetValidatorInfo(ctx, existingVals.ValOperAddress)
@@ -202,7 +200,7 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 
 			// reDelegationAmt to is the amount to redelegate, which is the min of diffAmount and target_validator
 			reDelegationAmt := sdk.MinDec(target_val.amount.Abs(), diff_val.amount)
-			// fmt.Println("Redelegate: ", source_val, target_val.valAddr, reDelegationAmt)
+			//fmt.Println("Redelegate: ", source_val, target_val.valAddr, reDelegationAmt)
 			_, err = k.stakingKeeper.BeginRedelegation(ctx, delegator, validator_source, validator_target, reDelegationAmt)
 			if err != nil {
 				return err
@@ -216,29 +214,6 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 	}
 
 	return nil
-}
-
-// appendExistingDelegationPositions appends existing staking position to existing valset position.
-func (k Keeper) appendExistingDelegationPositions(ctx sdk.Context, delegator sdk.AccAddress, existingSet []types.ValidatorPreference) []types.ValidatorPreference {
-	delegations := k.stakingKeeper.GetDelegatorDelegations(ctx, delegator, math.MaxUint16)
-
-	if len(delegations) != 0 {
-		m := make(map[string]bool)
-		for _, valsetDels := range existingSet {
-			m[valsetDels.ValOperAddress] = true
-		}
-
-		for _, stakingDels := range delegations {
-			if !m[stakingDels.ValidatorAddress] {
-				existingSet = append(existingSet, types.ValidatorPreference{
-					ValOperAddress: stakingDels.ValidatorAddress,
-					Weight:         sdk.ZeroDec(),
-				})
-			}
-		}
-	}
-
-	return existingSet
 }
 
 // WithdrawDelegationRewards withdraws all the delegation rewards from the validator in the val-set.
