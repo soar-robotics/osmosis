@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -54,4 +55,55 @@ func (k Keeper) GetValidatorSetPreference(ctx sdk.Context, delegator string) (ty
 	}
 
 	return valsetPref, true
+}
+
+// GetDelegationPreferences checks if valset position exists, if it does return that
+// else return existing delegation that's not valset.
+func (k Keeper) GetDelegationPreferences(ctx sdk.Context, delegator string) (types.ValidatorSetPreferences, error) {
+	valSet, exists := k.GetValidatorSetPreference(ctx, delegator)
+	if !exists {
+		delAddr, err := sdk.AccAddressFromBech32(delegator)
+		if err != nil {
+			return types.ValidatorSetPreferences{}, err
+		}
+
+		existingDelsValSetFormatted, err := k.GetExistingStakingDelegations(ctx, delAddr)
+		if err != nil {
+			return types.ValidatorSetPreferences{}, err
+		}
+
+		return types.ValidatorSetPreferences{Preferences: existingDelsValSetFormatted}, nil
+	}
+
+	return valSet, nil
+}
+
+// GetExistingStakingDelegations returns the existing delegation that's not valset.
+// This function also formats the output into ValidatorSetPreference struct where with {valAddr, weight}.
+// The weight is calculated based on (valDelegation / totalDelegations) for each validator.
+func (k Keeper) GetExistingStakingDelegations(ctx sdk.Context, delAddr sdk.AccAddress) ([]types.ValidatorPreference, error) {
+	var existingDelsValSetFormatted []types.ValidatorPreference
+
+	// valset delegation does not exist, so get all the existing delegations
+	existingDelegations := k.stakingKeeper.GetDelegatorDelegations(ctx, delAddr, math.MaxUint16)
+	if len(existingDelegations) == 0 {
+		return nil, fmt.Errorf("No Existing delegation")
+	}
+
+	existingTotalShares := sdk.NewDec(0)
+
+	// calculate total shares that currently exists
+	for _, existingDelegation := range existingDelegations {
+		existingTotalShares = existingTotalShares.Add(existingDelegation.Shares)
+	}
+
+	// for each delegation format it in types.ValidatorSetPreferences format
+	for _, existingDelegation := range existingDelegations {
+		existingDelsValSetFormatted = append(existingDelsValSetFormatted, types.ValidatorPreference{
+			ValOperAddress: existingDelegation.ValidatorAddress,
+			Weight:         existingDelegation.Shares.Quo(existingTotalShares),
+		})
+	}
+
+	return existingDelsValSetFormatted, nil
 }
