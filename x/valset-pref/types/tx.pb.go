@@ -483,9 +483,9 @@ func (m *MsgWithdrawDelegationRewardsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWithdrawDelegationRewardsResponse proto.InternalMessageInfo
 
-// MsgDelegateBondedTokens breaking of a bonded lockup (by ID) of osmo, of
-// length <= 2 weeks and takes all that osmo and delegates according to your
-// current validator set preference.
+// MsgDelegateBondedTokens breaks bonded lockup (by ID) of osmo, of
+// length <= 2 weeks and takes all that osmo and delegates according to
+// delegator's current validator set preference.
 type MsgDelegateBondedTokens struct {
 	// delegator is the user who is trying to force unbond osmo and delegate.
 	Delegator string `protobuf:"bytes,1,opt,name=delegator,proto3" json:"delegator,omitempty" yaml:"delegator"`

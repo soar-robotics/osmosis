@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/osmosis-labs/osmosis/v13/x/valset-pref/types"
 )
 
@@ -109,6 +110,12 @@ func (server msgServer) WithdrawDelegationRewards(goCtx context.Context, msg *ty
 // DelegateBondedTokens force unlocks bonded uosmo and stakes according to your current validator set preference.
 func (server msgServer) DelegateBondedTokens(goCtx context.Context, msg *types.MsgDelegateBondedTokens) (*types.MsgDelegateBondedTokensResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// get the existing validator set preference from store
+	_, found := server.keeper.GetValidatorSetPreference(ctx, msg.Delegator)
+	if !found {
+		return nil, fmt.Errorf("user %s doesn't have validator set", msg.Delegator)
+	}
 
 	// Message 1: force unlock bonded osmo tokens.
 	unlockedOsmoToken, err := server.keeper.ForceUnlockBondedOsmo(ctx, msg.LockID, msg.Delegator)
