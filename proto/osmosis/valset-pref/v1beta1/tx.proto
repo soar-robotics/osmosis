@@ -113,8 +113,8 @@ message MsgWithdrawDelegationRewards {
 
 message MsgWithdrawDelegationRewardsResponse {}
 
-// MsgDelegateBondedTokens breaking of a bonded lockup (by ID) of osmo, of
-// length <= 2 weeks and takes all that osmo and delegates according to your
+// MsgDelegateBondedTokens breaks bonded lockup (by ID) of osmo, of
+// length <= 2 weeks and takes all that osmo and delegates according to delegator's 
 // current validator set preference.
 message MsgDelegateBondedTokens {
   // delegator is the user who is trying to force unbond osmo and delegate.

@@ -18,7 +18,6 @@ type StakingInterface interface {
 	BeginRedelegation(ctx sdk.Context, delAddr sdk.AccAddress, valSrcAddr, valDstAddr sdk.ValAddress, sharesAmount sdk.Dec) (completionTime time.Time, err error)
 	GetDelegatorDelegations(ctx sdk.Context, delegator sdk.AccAddress, maxRetrieve uint16) (delegations []stakingtypes.Delegation)
 	GetValidators(ctx sdk.Context, maxRetrieve uint32) (validators []stakingtypes.Validator)
-	GetParams(ctx sdk.Context) stakingtypes.Params
 }
 
 type BankKeeper interface {
@@ -37,8 +36,4 @@ type LockupKeeper interface {
 	GetAllSyntheticLockupsByLockup(ctx sdk.Context, lockID uint64) []lockuptypes.SyntheticLock
 	ForceUnlock(ctx sdk.Context, lock lockuptypes.PeriodLock) error
 	BeginUnlock(ctx sdk.Context, lockID uint64, coins sdk.Coins) error
-}
-
-type GammKeeper interface {
-	GetPoolDenoms(ctx sdk.Context, poolId uint64) (denoms []string, err error)
 }

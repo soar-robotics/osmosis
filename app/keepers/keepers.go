@@ -375,7 +375,6 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 		appKeepers.StakingKeeper,
 		appKeepers.DistrKeeper,
 		appKeepers.LockupKeeper,
-		appKeepers.GAMMKeeper,
 	)
 
 	appKeepers.ValidatorSetPreferenceKeeper = &validatorSetPreferenceKeeper

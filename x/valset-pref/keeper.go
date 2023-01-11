@@ -19,7 +19,6 @@ type Keeper struct {
 	stakingKeeper      types.StakingInterface
 	distirbutionKeeper types.DistributionKeeper
 	lockupKeeper       types.LockupKeeper
-	gammKeeper         types.GammKeeper
 }
 
 func NewKeeper(storeKey sdk.StoreKey,
@@ -27,7 +26,6 @@ func NewKeeper(storeKey sdk.StoreKey,
 	stakingKeeper types.StakingInterface,
 	distirbutionKeeper types.DistributionKeeper,
 	lockupKeeper types.LockupKeeper,
-	gammKeeper types.GammKeeper,
 ) Keeper {
 	return Keeper{
 		storeKey:           storeKey,
@@ -35,7 +33,6 @@ func NewKeeper(storeKey sdk.StoreKey,
 		stakingKeeper:      stakingKeeper,
 		distirbutionKeeper: distirbutionKeeper,
 		lockupKeeper:       lockupKeeper,
-		gammKeeper:         gammKeeper,
 	}
 }
 

@@ -296,7 +296,7 @@ func (k Keeper) withdrawExistingValSetStakingPosition(ctx sdk.Context, delegator
 // current validator set preference.
 // (Note: Noting that there is an implicit valset preference if you've already staked)
 func (k Keeper) ForceUnlockBondedOsmo(ctx sdk.Context, lockID uint64, delegatorAddr string) (sdk.Coin, error) {
-	lock, unlockedOsmoAmount, err := k.validateLockForForceUnlock(ctx, lockID, delegatorAddr)
+	lock, lockedOsmoAmount, err := k.validateLockForForceUnlock(ctx, lockID, delegatorAddr)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
@@ -314,7 +314,7 @@ func (k Keeper) ForceUnlockBondedOsmo(ctx sdk.Context, lockID uint64, delegatorA
 	}
 
 	// Takes unlocked osmo, and delegate according to valset pref
-	unlockedOsmoCoin := sdk.Coin{Denom: appParams.BaseCoinUnit, Amount: unlockedOsmoAmount}
+	unlockedOsmoCoin := sdk.Coin{Denom: appParams.BaseCoinUnit, Amount: lockedOsmoAmount}
 
 	return unlockedOsmoCoin, nil
 }
@@ -452,7 +452,7 @@ func (k Keeper) validateLockForForceUnlock(ctx sdk.Context, lockID uint64, deleg
 		return nil, sdk.Int{}, fmt.Errorf("delegator (%s) and lock owner (%s) does not match", delegatorAddr, lock.Owner)
 	}
 
-	unlockedOsmoAmount := sdk.NewInt(0)
+	lockedOsmoAmount := sdk.NewInt(0)
 
 	// check that lock contains only 1 token
 	coin, err := lock.SingleCoin()
@@ -462,11 +462,11 @@ func (k Keeper) validateLockForForceUnlock(ctx sdk.Context, lockID uint64, deleg
 
 	// check that the lock denom is uosmo
 	if coin.Denom == appParams.BaseCoinUnit {
-		unlockedOsmoAmount = unlockedOsmoAmount.Add(coin.Amount)
+		lockedOsmoAmount = lockedOsmoAmount.Add(coin.Amount)
 	}
 
 	// check if there is enough uosmo token in the lock
-	if unlockedOsmoAmount.LTE(sdk.NewInt(0)) {
+	if lockedOsmoAmount.LTE(sdk.NewInt(0)) {
 		return nil, sdk.Int{}, fmt.Errorf("lock does not contain osmo denom, or there isn't enough osmo to unbond")
 	}
 
@@ -475,5 +475,5 @@ func (k Keeper) validateLockForForceUnlock(ctx sdk.Context, lockID uint64, deleg
 		return nil, sdk.Int{}, fmt.Errorf("the tokens have to bonded and the duration has to be <= 2weeks")
 	}
 
-	return lock, unlockedOsmoAmount, nil
+	return lock, lockedOsmoAmount, nil
 }

@@ -38,6 +38,7 @@ func (server msgServer) SetValidatorSetPreference(goCtx context.Context, msg *ty
 	return &types.MsgSetValidatorSetPreferenceResponse{}, nil
 }
 
+// DelegateToValidatorSet delegates to a delegators existing validator-set.
 func (server msgServer) DelegateToValidatorSet(goCtx context.Context, msg *types.MsgDelegateToValidatorSet) (*types.MsgDelegateToValidatorSetResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -49,6 +50,7 @@ func (server msgServer) DelegateToValidatorSet(goCtx context.Context, msg *types
 	return &types.MsgDelegateToValidatorSetResponse{}, nil
 }
 
+// UndelegateFromValidatorSet undelegates {coin} amount from the validator set.
 func (server msgServer) UndelegateFromValidatorSet(goCtx context.Context, msg *types.MsgUndelegateFromValidatorSet) (*types.MsgUndelegateFromValidatorSetResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -60,6 +62,7 @@ func (server msgServer) UndelegateFromValidatorSet(goCtx context.Context, msg *t
 	return &types.MsgUndelegateFromValidatorSetResponse{}, nil
 }
 
+// RedelegateValidatorSet allows delegators to set a new validator set and switch validators.
 func (server msgServer) RedelegateValidatorSet(goCtx context.Context, msg *types.MsgRedelegateValidatorSet) (*types.MsgRedelegateValidatorSetResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -91,6 +94,7 @@ func (server msgServer) RedelegateValidatorSet(goCtx context.Context, msg *types
 	return &types.MsgRedelegateValidatorSetResponse{}, nil
 }
 
+// WithdrawDelegationRewards withdraws all the delegation rewards from the validator in the val-set.
 func (server msgServer) WithdrawDelegationRewards(goCtx context.Context, msg *types.MsgWithdrawDelegationRewards) (*types.MsgWithdrawDelegationRewardsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
@@ -102,6 +106,7 @@ func (server msgServer) WithdrawDelegationRewards(goCtx context.Context, msg *ty
 	return &types.MsgWithdrawDelegationRewardsResponse{}, nil
 }
 
+// DelegateBondedTokens force unlocks bonded uosmo and stakes according to your current validator set preference.
 func (server msgServer) DelegateBondedTokens(goCtx context.Context, msg *types.MsgDelegateBondedTokens) (*types.MsgDelegateBondedTokensResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
