@@ -114,8 +114,8 @@ message MsgWithdrawDelegationRewards {
 message MsgWithdrawDelegationRewardsResponse {}
 
 // MsgDelegateBondedTokens breaks bonded lockup (by ID) of osmo, of
-// length <= 2 weeks and takes all that osmo and delegates according to delegator's 
-// current validator set preference.
+// length <= 2 weeks and takes all that osmo and delegates according to
+// delegator's current validator set preference.
 message MsgDelegateBondedTokens {
   // delegator is the user who is trying to force unbond osmo and delegate.
   string delegator = 1 [ (gogoproto.moretags) = "yaml:\"delegator\"" ];
