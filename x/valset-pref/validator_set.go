@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/osmosis-labs/osmosis/osmomath"
 	"github.com/osmosis-labs/osmosis/v14/x/valset-pref/types"
 )
@@ -199,7 +200,7 @@ func (k Keeper) PreformRedelegation(ctx sdk.Context, delegator sdk.AccAddress, e
 			}
 
 			// reDelegationAmt to is the amount to redelegate, which is the min of diffAmount and target_validator
-			reDelegationAmt := sdk.MinDec(target_val.amount.Abs(), diff_val.amount)
+			reDelegationAmt := sdk.MinDec(target_val.amount.Abs(), diff_val.amount).TruncateDec()
 			//fmt.Println("Redelegate: ", source_val, target_val.valAddr, reDelegationAmt)
 			_, err = k.stakingKeeper.BeginRedelegation(ctx, delegator, validator_source, validator_target, reDelegationAmt)
 			if err != nil {
